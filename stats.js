@@ -31,6 +31,12 @@ $(function() {
         return los;
     }
 
+    function dateRangeText(dates) {
+        if (!dates) { return null; }
+        var date_format = 'MMM YYYY';
+        return moment(dates[0]).format(date_format) + ' to ' + moment(dates[1]).format(date_format);
+    }
+
     function refresh(data) {
         // LOS breakdown
         var los = [];
@@ -46,8 +52,7 @@ $(function() {
         // LOS graph
         var i, j,
             dd1 = [],
-            graph = $('#graph1')[0],
-            date_format = 'MMM YYYY';
+            graph = $('#graph1')[0];
         for (i = 0; i < means.length; i++) {
             dd1.push([i, means[i]]);
         }
@@ -70,7 +75,7 @@ $(function() {
                     tickFormatter: function (x) {
                         var i = parseInt(x);
                         if (i < 0 || i >= date_ranges.length) { return ''; }
-                        return moment(date_ranges[i][0]).format(date_format) + ' to ' + moment(date_ranges[i][1]).format(date_format);
+                        return dateRangeText(date_ranges[i]);
                     }
                 },
                 yaxis: {
@@ -114,10 +119,20 @@ $(function() {
                 }
             }
         }
-        console.log(dd)
+        // Add graphs
+        var $histograms = $('#histograms'),
+            tpl = _.template($('#loshistogram-2-col-template').html());
+        for (i = 0; i < 5; i+=2) {
+            var cols =  [
+                { graphId: 'loshistogram' + i, timeRange: dateRangeText(date_ranges[i]) },
+                { graphId: 'loshistogram' + (i+1), timeRange: dateRangeText(date_ranges[i+1]) },
+            ];
+            if (i+2 > 5) { cols.splice(1); }
+            $histograms.append(tpl({ data: cols }));
+        }
         // Draw graphs
         for (i = 0; i < 5; i++) {
-            graph = $('#graph' + (i+2))[0];
+            graph = $('#loshistogram'+i)[0];
             Flotr.draw(graph, [dd[i]], {
                 xaxis: { title: '', min: 0, max: 30},
                 yaxis: { title: 'n' },
@@ -131,8 +146,8 @@ $(function() {
         }
 
         // Statistics
-        var $statstablebody = $('#stats-table > tbody'),
-            tpl = _.template($('#statsrow-template').html());
+        var $statstablebody = $('#stats-table > tbody');
+        tpl = _.template($('#statsrow-template').html());
         $statstablebody
             .append(tpl({ label: '# Samples', cols: nsamples }))
             .append(tpl({ label: 'Average (hrs)', cols: means }))

@@ -41,33 +41,12 @@
               <div id="graph1" class="graph"></div>
             </div>
           </div>
-          <div class="row">&nbsp;</div>
           <div class="row">
-            <div class="col-md-5 col-md-offset-1">
-              <p class="text-center"><strong>Length of Stay, Group 1 (Hours)</strong></p>
-              <div id="graph2" class="graph"></div>
-            </div>
-            <div class="col-md-5">
-              <p class="text-center"><strong>Length of Stay, Group 2 (Hours)</strong></p>
-              <div id="graph3" class="graph"></div>
+            <div id="histograms" class="col-md-12">
+              <h4 class="sub-header">Histograms by Time Period</h4>
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-5 col-md-offset-1">
-              <p class="text-center"><strong>Length of Stay, Group 3 (Hours)</strong></p>
-              <div id="graph4" class="graph"></div>
-            </div>
-            <div class="col-md-5">
-              <p class="text-center"><strong>Length of Stay, Group 4 (Hours)</strong></p>
-              <div id="graph5" class="graph"></div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-5 col-md-offset-1">
-              <p class="text-center"><strong>Length of Stay, Group 5 (Hours)</strong></p>
-              <div id="graph6" class="graph"></div>
-            </div>
-          </div>
+
           <h2 class="sub-header">Statistics</h2>
           <div class="row">
               <div class="col-md-12">
@@ -100,6 +79,20 @@
             <td><%= cols[i]%></td>
           <% } %>
         </tr>
+    </script>
+    <script id="loshistogram-2-col-template" type="text/template">
+      <div class="row">
+        <div class="col-md-5 col-md-offset-1">
+          <p class="text-center"><strong>Length of Stay, <%= data[0].timeRange %> (Hours)</strong></p>
+          <div id="<%= data[0].graphId %>" class="graph"></div>
+        </div>
+        <% if (data.length > 1) { %>
+        <div class="col-md-5">
+          <p class="text-center"><strong>Length of Stay, <%= data[1].timeRange %> (Hours)</strong></p>
+          <div id="<%= data[1].graphId %>" class="graph"></div>
+        </div>
+        <% } %>
+      </div>
     </script>
 
     <!-- Placed at the end of the document so the pages load faster -->
