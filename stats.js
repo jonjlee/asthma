@@ -44,11 +44,10 @@ $(function() {
             stddevs = los.map(function(arr) { return ss.standard_deviation(arr).toFixed(2); });
 
         // LOS graph
-        var i,
+        var i, j,
             dd1 = [],
             graph = $('#graph1')[0],
             date_format = 'MMM YYYY';
-
         for (i = 0; i < means.length; i++) {
             dd1.push([i, means[i]]);
         }
@@ -90,15 +89,56 @@ $(function() {
             }
         );
 
+        // Length of stay histograms
+        var dd = [],
+            dx = 3,
+            trackFormatter = function(e) { 
+                var x = parseInt(e.x), y = parseInt(e.y);
+                console.log(e)
+                return y + ' pts, ' + x + '-' + parseFloat(e.series.data[e.index+1][0]).toFixed(0) + ' hours'; 
+            };
+        for (i = 0; i < los.length; i++) {
+            var days = los[i].map(function(v) { return v; }),
+                bins = histogram().range([0,30]).bins(30)(days),
+                dx = bins[0].dx;
+            dd.push({
+                data: bins.map(function(v) { return [v.x, v.y]; }),
+                bars: { show: true, barWidth: dx, centered: false }
+            });
+        }
+        // Remove all points with n=0
+        for (i = 0; i<dd.length; i++) {
+            for (j=dd[i].data.length-1; j >= 0; j--) {
+                if (dd[i].data[j][1] <= 0) {
+                    dd[i].data.splice(j, 1);
+                }
+            }
+        }
+        console.log(dd)
+        // Draw graphs
+        for (i = 0; i < 5; i++) {
+            graph = $('#graph' + (i+2))[0];
+            Flotr.draw(graph, [dd[i]], {
+                xaxis: { title: '', min: 0, max: 30},
+                yaxis: { title: 'n' },
+                mouse: {
+                    position: 'ne',
+                    track: true,
+                    trackDecimals: 2,
+                    trackFormatter: trackFormatter
+                },
+            });
+        }
+
         // Statistics
         var $statstablebody = $('#stats-table > tbody'),
             tpl = _.template($('#statsrow-template').html());
         $statstablebody
             .append(tpl({ label: '# Samples', cols: nsamples }))
-            .append(tpl({ label: 'Average', cols: means }))
-            .append(tpl({ label: 'Stddev', cols: stddevs }))
-            .append(tpl({ label: 'Median', cols: medians }))
-            .append(tpl({ label: 'MAD', cols: mads }));
+            .append(tpl({ label: 'Average (hrs)', cols: means }))
+            .append(tpl({ label: 'Stddev (hrs)', cols: stddevs }))
+            .append(tpl({ label: 'Median (hrs)', cols: medians }))
+            .append(tpl({ label: 'MAD (hrs)', cols: mads }));
     }
 
     init();
