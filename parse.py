@@ -99,6 +99,10 @@ def output(data, outfile):
     else:
         with open(outfile + '.js', 'w') as out:
             out.write('data = %s;' % js_data)
+        with open(outfile + '.csv', 'w') as out:
+            writer = csv.DictWriter(out, fieldnames=['Admit', 'LOS'])
+            writer.writeheader()
+            for row in data: writer.writerow(row)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
