@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    
+    <title>OUHSC Asthma QI</title>
+
+    <link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="stats.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-2 sidebar">
+          <h4 class="section-title"><center>Settings</center></h4>
+          <hr/>
+          <ul class="nav nav-sidebar">
+            <li class="section-title"></li>
+            <li class="section">
+            </li>
+          </ul>
+        </div>
+        <div class="col-sm-10 col-sm-offset-2 main">
+          <h2 class="sub-header">Primary Outcome - Length of Stay</h2>
+          <div class="row">
+              <div class="col-md-12">
+                <div id="graph1" class="graph"></div>
+              </div>
+          </div>
+          <h2 class="sub-header">Statistics</h2>
+          <div class="row">
+              <div class="col-md-12">
+                <table id="ntable" class="table">
+                  <tr>
+                    <th></th>
+                    <th>Jan 2007 to Jun 2011</th>
+                    <th>Jul 2011 to Jun 2012</th>
+                    <th>Jul 2012 to Jun 2013</th>
+                    <th>Jul 2013 to Jun 2014</th>
+                    <th>Jul 2014 to Dec 2015</th>
+                  </tr>
+                  <tr>
+                    <th># Samples</th>
+                    <td>5193</td>
+                    <td>1493</td>
+                    <td>1694</td>
+                    <td>1635</td>
+                    <td>1209</td>
+                  </tr>
+                  <tr>
+                    <th>Stddev</th>
+                    <td>1.45</td>
+                    <td>0.81</td>
+                    <td>0.95</td>
+                    <td>1.05</td>
+                    <td>0.64</td>
+                  </tr>
+                </table>
+              </div>
+          </div>
+      </div>
+    </div>
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="static/jquery.min.js"></script>
+    <script src="static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="static/flotr2.min.js"></script>
+    <script src="static/moment.js"></script>
+    <script src="static/simple_statistics.js"></script>
+    <script src="data.js"></script>
+    <script src="stats.js"></script>
+  </body>
+</html>
