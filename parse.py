@@ -62,12 +62,11 @@ def filter_exclusion(data):
 
     return filtered
 
-def remove_phi(data):
-    # hpi_fields = set()
-    hpi_fields = set(['Unit#', 'Account#', 'Name', 'Age', 'ICD9 Codes', 'ICD9 Categories', 'Discharge', 'Discharge Location'])
+def remove_fields(data, remove_fields):
+    remove_fields = set(remove_fields)
     for row in data:
         fields = row.keys()
-        field_to_remove = hpi_fields.intersection(fields)
+        field_to_remove = remove_fields.intersection(fields)
         for field in field_to_remove:
             del row[field]
 
@@ -82,7 +81,7 @@ def main(fname, outfile):
     data = filter_exclusion(data)
 
     # Remove all PHI
-    remove_phi(data)
+    remove_fields(data, ['Unit#', 'Account#', 'Name', 'Age', 'ICD9 Categories', 'Discharge', 'Discharge Location'])
 
     output(data, outfile)
 
@@ -100,9 +99,9 @@ def output(data, outfile):
         with open(outfile + '.js', 'w') as out:
             out.write('data = %s;' % js_data)
         with open(outfile + '.csv', 'w') as out:
-            writer = csv.DictWriter(out, fieldnames=['Admit', 'LOS'])
-            writer.writeheader()
-            for row in data: writer.writerow(row)
+            writer = csv.writer(out)
+            writer.writerow(['Admit', 'LOS', 'ICD9 Codes'])
+            for row in data: writer.writerow([row['Admit'], row['LOS'], ' '.join(row['ICD9 Codes'])])
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
