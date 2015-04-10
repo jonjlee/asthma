@@ -1,23 +1,30 @@
 $(function() {
     var date_ranges = [
-        [moment('1/1/2007'), moment('6/30/2011')],
-        [moment('7/1/2011'), moment('6/30/2012')],
-        [moment('7/1/2012'), moment('6/30/2013')],
-        [moment('7/1/2013'), moment('6/30/2014')],
-        [moment('7/1/2014'), moment('12/31/2015')],
+        [new Date('1/1/2007'), new Date('3/31/2011')],
+        [new Date('10/1/2011'), new Date('3/31/2012')],
+        [new Date('10/1/2012'), new Date('3/31/2013')],
+        [new Date('10/1/2013'), new Date('3/31/2014')],
+        [new Date('10/1/2014'), new Date('3/31/2015')],
+        // [new Date('1/1/2007'), new Date('6/30/2011')],
+        // [new Date('7/1/2011'), new Date('6/30/2012')],
+        // [new Date('7/1/2012'), new Date('6/30/2013')],
+        // [new Date('7/1/2013'), new Date('6/30/2014')],
+        // [new Date('7/1/2014'), new Date('12/31/2015')],
     ];
 
     function init() {
         // Format datetime fields
         for (var i in data) {
-            data[i]['Admit'] = moment(data[i]['Admit']);
+            data[i]['Admit'] = new Date(data[i]['Admit']);
         }
+
     }
 
     function losForDates(data, dates) {
         var los = [];
         for (var i in data) {
-            if (data[i]['Admit'].isBetween(dates[0], dates[1])) {
+            var date = data[i]['Admit'];
+            if (date >= dates[0] && date <= dates[1]) {
                 los.push(data[i]['LOS']);
             }
         }
@@ -28,12 +35,13 @@ $(function() {
         // LOS breakdown
         var los = [];
         for (var i in date_ranges) {
-            los.push(losForDates(data, date_ranges[i]))
+            los.push(losForDates(data, date_ranges[i]));
         }
-        var medians = los.map(function(arr) { return ss.median(arr); }),
-            mads = los.map(function(arr) { return ss.mad(arr); }),
-            means = los.map(function(arr) { return ss.mean(arr); }),
-            stddevs = los.map(function(arr) { return ss.standard_deviation(arr); });
+        var nsamples = los.map(function(arr) { return arr.length; }), 
+            medians = los.map(function(arr) { return ss.median(arr).toFixed(2); }),
+            mads = los.map(function(arr) { return ss.mad(arr).toFixed(2); }),
+            means = los.map(function(arr) { return ss.mean(arr).toFixed(2); }),
+            stddevs = los.map(function(arr) { return ss.standard_deviation(arr).toFixed(2); });
 
         // LOS graph
         var i,
@@ -42,7 +50,7 @@ $(function() {
             date_format = 'MMM YYYY';
 
         for (i = 0; i < means.length; i++) {
-            dd1.push([i, means[i] * 24]);
+            dd1.push([i, means[i]]);
         }
         Flotr.draw(graph, [
                 { 
@@ -52,25 +60,24 @@ $(function() {
                     markers: {
                         show: true,
                         position: 'rt',
-                        labelFormatter: function(o) { return o.y.toFixed(2); },
+                        labelFormatter: function(o) { return o.y; },
                     },
                 }
             ], {
                 colors: ['#00A8F0', '#C0D800', '#9440ED'],
-                // bars : { show : true, },
                 xaxis: {
                     min: -0.2,
                     max: 4.2,
                     tickFormatter: function (x) {
                         var i = parseInt(x);
                         if (i < 0 || i >= date_ranges.length) { return ''; }
-                        return date_ranges[i][0].format(date_format) + ' to ' + date_ranges[i][1].format(date_format);
+                        return moment(date_ranges[i][0]).format(date_format) + ' to ' + moment(date_ranges[i][1]).format(date_format);
                     }
                 },
                 yaxis: {
                     title: 'Average LOS<br/>(hours)',
-                    min: 25,
-                    max: 35,
+                    autoscale: true,
+                    autoscaleMargin: 0.2,
                 },
                 mouse: {
                     position: 'ne',
@@ -80,16 +87,18 @@ $(function() {
                     trackY: true,
                     trackFormatter: function(e) { return 'Mean = '+e.y; }
                 },
-                legend : {
-                    position : 'se',
-                }
             }
         );
 
         // Statistics
-        var ntable = $('#ntable');
-
-        console.log(stddevs)
+        var $statstablebody = $('#stats-table > tbody'),
+            tpl = _.template($('#statsrow-template').html());
+        $statstablebody
+            .append(tpl({ label: '# Samples', cols: nsamples }))
+            .append(tpl({ label: 'Average', cols: means }))
+            .append(tpl({ label: 'Stddev', cols: stddevs }))
+            .append(tpl({ label: 'Median', cols: medians }))
+            .append(tpl({ label: 'MAD', cols: mads }));
     }
 
     init();

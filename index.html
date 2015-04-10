@@ -32,45 +32,44 @@
           </ul>
         </div>
         <div class="col-sm-10 col-sm-offset-2 main">
-          <h2 class="sub-header">Primary Outcome - Length of Stay</h2>
+          <h2 class="sub-header">Primary Outcomes</h2>
           <div class="row">
-              <div class="col-md-12">
-                <div id="graph1" class="graph"></div>
-              </div>
+            <div class="col-md-12">
+              <h4 class="sub-header">Length of Stay</h4>
+              <div id="graph1" class="graph"></div>
+            </div>
           </div>
           <h2 class="sub-header">Statistics</h2>
           <div class="row">
               <div class="col-md-12">
-                <table id="ntable" class="table">
-                  <tr>
-                    <th></th>
-                    <th>Jan 2007 to Jun 2011</th>
-                    <th>Jul 2011 to Jun 2012</th>
-                    <th>Jul 2012 to Jun 2013</th>
-                    <th>Jul 2013 to Jun 2014</th>
-                    <th>Jul 2014 to Dec 2015</th>
-                  </tr>
-                  <tr>
-                    <th># Samples</th>
-                    <td>5193</td>
-                    <td>1493</td>
-                    <td>1694</td>
-                    <td>1635</td>
-                    <td>1209</td>
-                  </tr>
-                  <tr>
-                    <th>Stddev</th>
-                    <td>1.45</td>
-                    <td>0.81</td>
-                    <td>0.95</td>
-                    <td>1.05</td>
-                    <td>0.64</td>
-                  </tr>
+                <table id="stats-table" class="table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Jan 2007 to Jun 2011</th>
+                      <th>Jul 2011 to Jun 2012</th>
+                      <th>Jul 2012 to Jun 2013</th>
+                      <th>Jul 2013 to Jun 2014</th>
+                      <th>Jul 2014 to Dec 2015</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
                 </table>
               </div>
           </div>
       </div>
     </div>
+
+    <!-- Templates -->
+    <script id="statsrow-template" type="text/template">
+        <tr>
+          <th><%= label %></th>
+          <% for (var i in cols) { %>
+            <td><%= cols[i]%></td>
+          <% } %>
+        </tr>
+    </script>
 
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="static/jquery.min.js"></script>

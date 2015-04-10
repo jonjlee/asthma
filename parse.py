@@ -64,7 +64,7 @@ def filter_exclusion(data):
 
 def remove_phi(data):
     # hpi_fields = set()
-    hpi_fields = set(['Unit#', 'Account#', 'Name'])
+    hpi_fields = set(['Unit#', 'Account#', 'Name', 'Age', 'ICD9 Codes', 'ICD9 Categories', 'Discharge', 'Discharge Location'])
     for row in data:
         fields = row.keys()
         field_to_remove = hpi_fields.intersection(fields)
