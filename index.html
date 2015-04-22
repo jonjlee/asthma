@@ -47,20 +47,7 @@
           <h2 class="sub-header">Statistics</h2>
           <div class="row">
               <div class="col-md-12">
-                <table id="stats-table" class="table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Jan 2007 to Jun 2011</th>
-                      <th>Jul 2011 to Jun 2012</th>
-                      <th>Jul 2012 to Jun 2013</th>
-                      <th>Jul 2013 to Jun 2014</th>
-                      <th>Jul 2014 to Dec 2015</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  </tbody>
-                </table>
+                <table id="stats-table" class="table"></table>
               </div>
           </div>
           <h2 class="sub-header">Data</h2>
@@ -85,14 +72,6 @@
           </tr>
         <% }); %>
       </tbody>
-    </script>
-    <script id="statsrow-template" type="text/template">
-        <tr>
-          <th><%= label %></th>
-          <% for (var i in cols) { %>
-            <td><%= cols[i]%></td>
-          <% } %>
-        </tr>
     </script>
     <script id="loshistogram-2-col-template" type="text/template">
       <div class="row">

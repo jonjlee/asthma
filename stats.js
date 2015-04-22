@@ -1,16 +1,22 @@
 $(function() {
-    var date_ranges = [
-        [new Date('1/1/2007'), new Date('3/31/2011')],
-        [new Date('10/1/2011'), new Date('3/31/2012')],
-        [new Date('10/1/2012'), new Date('3/31/2013')],
-        [new Date('10/1/2013'), new Date('3/31/2014')],
-        [new Date('10/1/2014'), new Date('3/31/2015')],
-        // [new Date('1/1/2007'), new Date('6/30/2011')],
-        // [new Date('7/1/2011'), new Date('6/30/2012')],
-        // [new Date('7/1/2012'), new Date('6/30/2013')],
-        // [new Date('7/1/2013'), new Date('6/30/2014')],
-        // [new Date('7/1/2014'), new Date('12/31/2015')],
-    ];
+    function dateRangeText(dates) {
+        if (!dates) { return null; }
+        var date_format = 'MMM YYYY';
+        return moment(dates[0]).format(date_format) + ' to ' + moment(dates[1]).format(date_format);
+    }
+    var DATE_RANGES = [
+            [new Date('1/1/2007'), new Date('3/31/2011')],
+            [new Date('10/1/2011'), new Date('3/31/2012')],
+            [new Date('10/1/2012'), new Date('3/31/2013')],
+            [new Date('10/1/2013'), new Date('3/31/2014')],
+            [new Date('10/1/2014'), new Date('3/31/2015')],
+            // [new Date('1/1/2007'), new Date('6/30/2011')],
+            // [new Date('7/1/2011'), new Date('6/30/2012')],
+            // [new Date('7/1/2012'), new Date('6/30/2013')],
+            // [new Date('7/1/2013'), new Date('6/30/2014')],
+            // [new Date('7/1/2014'), new Date('12/31/2015')],
+        ],
+        DATE_RANGES_TEXT = DATE_RANGES.map(dateRangeText);
 
     function init() {
         // Format datetime fields
@@ -31,17 +37,11 @@ $(function() {
         return los;
     }
 
-    function dateRangeText(dates) {
-        if (!dates) { return null; }
-        var date_format = 'MMM YYYY';
-        return moment(dates[0]).format(date_format) + ' to ' + moment(dates[1]).format(date_format);
-    }
-
     function refresh(data) {
         // LOS breakdown
         var los = [];
-        for (var i in date_ranges) {
-            los.push(losForDates(data, date_ranges[i]));
+        for (var i in DATE_RANGES) {
+            los.push(losForDates(data, DATE_RANGES[i]));
         }
         var nsamples = los.map(function(arr) { return arr.length; }), 
             medians = los.map(function(arr) { return ss.median(arr).toFixed(2); }),
@@ -73,9 +73,7 @@ $(function() {
                     min: -0.2,
                     max: 4.2,
                     tickFormatter: function (x) {
-                        var i = parseInt(x);
-                        if (i < 0 || i >= date_ranges.length) { return ''; }
-                        return dateRangeText(date_ranges[i]);
+                        return DATE_RANGES_TEXT[parseInt(x)] || '';
                     }
                 },
                 yaxis: {
@@ -99,7 +97,6 @@ $(function() {
             dx = 3,
             trackFormatter = function(e) { 
                 var x = parseInt(e.x), y = parseInt(e.y);
-                console.log(e)
                 return y + ' pts, ' + x + '-' + parseFloat(e.series.data[e.index+1][0]).toFixed(0) + ' hours'; 
             };
         for (i = 0; i < los.length; i++) {
@@ -124,8 +121,8 @@ $(function() {
             tpl = _.template($('#loshistogram-2-col-template').html());
         for (i = 0; i < 5; i+=2) {
             var cols =  [
-                { graphId: 'loshistogram' + i, timeRange: dateRangeText(date_ranges[i]) },
-                { graphId: 'loshistogram' + (i+1), timeRange: dateRangeText(date_ranges[i+1]) },
+                { graphId: 'loshistogram' + i, timeRange: DATE_RANGES_TEXT[i] },
+                { graphId: 'loshistogram' + (i+1), timeRange: DATE_RANGES_TEXT[i+1] },
             ];
             if (i+2 > 5) { cols.splice(1); }
             $histograms.append(tpl({ data: cols }));
@@ -146,14 +143,20 @@ $(function() {
         }
 
         // Statistics
-        var $statstablebody = $('#stats-table > tbody');
-        tpl = _.template($('#statsrow-template').html());
-        $statstablebody
-            .append(tpl({ label: '# Samples', cols: nsamples }))
-            .append(tpl({ label: 'Average (hrs)', cols: means }))
-            .append(tpl({ label: 'Stddev (hrs)', cols: stddevs }))
-            .append(tpl({ label: 'Median (hrs)', cols: medians }))
-            .append(tpl({ label: 'MAD (hrs)', cols: mads }));
+        var $statstable = $('#stats-table'),
+            statstabletpl = _.template($('#table-template').html());
+        $statstable.append(statstabletpl({
+            num_header_rows: 1,
+            num_header_cols: 1,
+            rows: [
+                [''].concat(DATE_RANGES_TEXT),
+                ['# Samples'].concat(nsamples),
+                ['Average (hrs)'].concat(means),
+                ['Stddev (hrs)'].concat(stddevs),
+                ['Median (hrs)'].concat(medians),
+                ['MAD (hrs)'].concat(mads),
+            ]
+        }));
     }
 
     init();
