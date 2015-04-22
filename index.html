@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
     
     <title>OUHSC Asthma QI</title>
 
-    <link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/thirdparty/bootstrap-3.3.4/css/bootstrap.min.css" rel="stylesheet">
     <link href="stats.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -22,18 +22,15 @@
   <body>
     <div class="container-fluid">
       <div class="row">
-<!--         <div class="col-sm-2 sidebar">
-          <h4 class="section-title"><center>Settings</center></h4>
-          <hr/>
+        <div class="col-md-2 sidebar hidden">
           <ul class="nav nav-sidebar">
-            <li class="section-title"></li>
+            <li class="section-title">Settings</li>
             <li class="section">
+              <div><em>Add analysis parameters here</em></div>
             </li>
           </ul>
         </div>
-        <div class="col-sm-10 col-sm-offset-2 main">
--->
-        <div class="col-sm-12 main">
+        <div class="col-md-12 col-md-offset-0 main">
           <h2 class="sub-header">Primary Outcomes</h2>
           <div class="row">
             <div class="col-md-12">
@@ -68,10 +65,27 @@
           </div>
           <h2 class="sub-header">Data</h2>
           Raw data (anonymized): <a href="https://raw.githubusercontent.com/jonjlee/asthma/gh-pages/data.csv">CSV</a>
+        </div>
       </div>
     </div>
 
     <!-- Templates -->
+    <script id="table-template" type="text/template">
+      <tbody>
+        <% _.each(rows, function(row, rownum) { %>
+          <tr>
+          <% _.each(row, function(col, colnum) {
+            header = (rownum < num_header_rows || colnum < num_header_cols);
+            if (header) {
+              print("<th>" + col + "</th>");
+            } else {
+              print("<td>" + col + "</td>");
+            }
+          }); %>
+          </tr>
+        <% }); %>
+      </tbody>
+    </script>
     <script id="statsrow-template" type="text/template">
         <tr>
           <th><%= label %></th>
@@ -96,11 +110,14 @@
     </script>
 
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="static/jquery.min.js"></script>
-    <script src="static/bootstrap/js/bootstrap.min.js"></script>
-    <script src="static/flotr2.min.js"></script>
-    <script src="static/moment.js"></script>
-    <script src="static/simple_statistics.js"></script>
+    <script src="static/thirdparty/jquery-1.11.2.min.js"></script>
+    <script src="static/thirdparty/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script src="static/thirdparty/flotr2.min.js"></script>
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="/static/thirdparty/FlashCanvas/bin/flashcanvas.js"></script>
+    <![endif]-->
+    <script src="static/thirdparty/moment.js"></script>
+    <script src="static/thirdparty/simple_statistics.js"></script>
     <script src="static/histogram.js"></script>
     <script src="data.js"></script>
     <script src="stats.js"></script>
