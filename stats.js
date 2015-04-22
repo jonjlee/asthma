@@ -24,6 +24,7 @@ $(function() {
             data[i]['Admit'] = new Date(data[i]['Admit']);
         }
 
+        refreshData()
     }
 
     function losForDates(data, dates) {
@@ -35,6 +36,37 @@ $(function() {
             }
         }
         return los;
+    }
+
+    function readmitsForDates(data, dates) {
+        var readmits = 0;
+        for (var i in data) {
+            var date = data[i]['Admit'];
+            if (date >= dates[0] && date <= dates[1] && data[i].readmit) {
+                readmits += 1;
+            }
+        }
+        return readmits;
+    }
+
+    function calcReadmissions(data, dayIntervalForReadmit) {
+        var lastVisitById = {};
+        _.each(data, function(row) {
+            var visit = row['Admit'],
+                readmitLimit = new Date(visit),
+                lastVisit = lastVisitById[row.pid];
+            readmitLimit.setDate(readmitLimit.getDate() - dayIntervalForReadmit);
+            if (lastVisit && (lastVisit >= readmitLimit)) {
+                row.readmit = 1;
+            } else {
+                row.readmit = 0;
+            }
+            lastVisitById[row.pid] = visit;
+        });
+    }
+
+    function refreshData() {
+        calcReadmissions(data, 15);
     }
 
     function refresh(data) {
@@ -141,6 +173,48 @@ $(function() {
                 },
             });
         }
+
+        // Readmit breakdown
+        var readmits = [];
+        for (var i in DATE_RANGES) {
+            readmits.push(readmitsForDates(data, DATE_RANGES[i]));
+        }
+        // LOS graph
+        dd1 = [],
+        graph = $('#readmits-graph')[0];
+        for (i = 0; i < readmits.length; i++) {
+            dd1.push([i, readmits[i]]);
+        }
+        Flotr.draw(graph, [
+                { 
+                    data: dd1,
+                    bars: { show: true },
+                    markers: {
+                        show: true,
+                        position: 'rt',
+                        labelFormatter: function(o) { return o.y; },
+                    },
+                }
+            ], {
+                colors: ['#00A8F0', '#C0D800', '#9440ED'],
+                xaxis: {
+                    tickFormatter: function (x) {
+                        return DATE_RANGES_TEXT[parseInt(x)] || '';
+                    }
+                },
+                yaxis: {
+                    title: '#',
+                    autoscale: true,
+                    autoscaleMargin: 0.2,
+                },
+                mouse: {
+                    position: 'ne',
+                    track: true,
+                    trackDecimals: 0,
+                    trackFormatter: function(e) { return e.y + ' readmissions'; }
+                },
+            }
+        );
 
         // Statistics
         var $statstable = $('#stats-table'),
