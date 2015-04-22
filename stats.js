@@ -43,11 +43,11 @@ $(function() {
         for (var i in DATE_RANGES) {
             los.push(losForDates(data, DATE_RANGES[i]));
         }
-        var nsamples = los.map(function(arr) { return arr.length; }), 
-            medians = los.map(function(arr) { return ss.median(arr).toFixed(2); }),
-            mads = los.map(function(arr) { return ss.mad(arr).toFixed(2); }),
-            means = los.map(function(arr) { return ss.mean(arr).toFixed(2); }),
-            stddevs = los.map(function(arr) { return ss.standard_deviation(arr).toFixed(2); });
+        var nsamples = _.map(los, function(arr) { return arr.length; }), 
+            medians = _.map(los, function(arr) { return ss.median(arr).toFixed(2); }),
+            mads = _.map(los, function(arr) { return ss.mad(arr).toFixed(2); }),
+            means = _.map(los, function(arr) { return ss.mean(arr).toFixed(2); }),
+            stddevs = _.map(los, function(arr) { return ss.standard_deviation(arr).toFixed(2); });
 
         // LOS graph
         var i, j,
@@ -100,11 +100,11 @@ $(function() {
                 return y + ' pts, ' + x + '-' + parseFloat(e.series.data[e.index+1][0]).toFixed(0) + ' hours'; 
             };
         for (i = 0; i < los.length; i++) {
-            var days = los[i].map(function(v) { return v; }),
+            var days = _.map(los[i], function(v) { return v; }),
                 bins = histogram().range([0,30]).bins(30)(days),
                 dx = bins[0].dx;
             dd.push({
-                data: bins.map(function(v) { return [v.x, v.y]; }),
+                data: _.map(bins, function(v) { return [v.x, v.y]; }),
                 bars: { show: true, barWidth: dx, centered: false }
             });
         }
