@@ -38,3 +38,17 @@ def to_csv(data, filename, fieldnames, headers=None):
         writer = csv.writer(out)
         writer.writerow(fieldnames)
         for row in data: writer.writerow([row[field] for field in fieldnames])
+
+def to_xls(data, filename, fieldnames, sheetname='Data', headers=None):
+    # Default header row to the same as field names
+    headers = headers or fieldnames
+
+    workbook = xlwt.Workbook() 
+    sheet = workbook.add_sheet(sheetname)
+    for colidx, header in enumerate(headers):
+        sheet.write(0, colidx, header)
+    for rowidx, row in enumerate(data):
+        for colidx, field in enumerate(fieldnames):
+            sheet.write(rowidx+1, colidx, row[field])
+
+    workbook.save(filename)
