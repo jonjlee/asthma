@@ -16,7 +16,7 @@ $(function() {
             // [new Date('7/1/2013'), new Date('6/30/2014')],
             // [new Date('7/1/2014'), new Date('12/31/2015')],
         ],
-        DATE_RANGES_TEXT = DATE_RANGES.map(dateRangeText);
+        DATE_RANGES_TEXT = _.map(DATE_RANGES, dateRangeText);
 
     function init() {
         // Format datetime fields
