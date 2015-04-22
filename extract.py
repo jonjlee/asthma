@@ -13,7 +13,7 @@ def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, 
     datetime_format: Passed directly to datetime.strptime() used when datetime_fields
         are specified
     '''
-    with open(filename, newline='') as f:
+    with open(filename, newline='', encoding=encoding) as f:
         reader = csv.DictReader(f, fieldnames=fieldnames, restkey=restkey)
         
         # Skip startline lines
