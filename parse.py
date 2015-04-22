@@ -1,113 +1,68 @@
 #!/usr/bin/env python -B
+import extract, transform, load
+from copy import deepcopy
 
-import csv
-import sys
-import itertools
-import json
-from datetime import datetime
-from pprint import pprint
+# Set up logging
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)-15s: %(message)s')
 
-def load_icd9_lookup():
-    with open('icd9.csv', newline='', encoding='latin-1') as f:
-        reader = csv.reader(f)
-        reader.__next__()  # skip header row
-        icd9_lookup = [(row[0], row[1]) for row in reader]
-        icd9_lookup = dict(icd9_lookup)
+def main():
+    # Extract
+    # ------------------------------------------------------------------------
+    # Read and parse datasets. Functions in the extract module return data
+    # as a list of dicts where each item represents a row. For example:
+    #
+    #   data = [
+    #       {'name': 'john doe', 'diagnosis': 'pneumonia'}, 
+    #       ...
+    #   ]
+    data = extract.from_csv(
+        filename='1.csv',
+        fieldnames=['Unit#', 'Account#', 'Name', 'Age', 'Admit', 'Discharge', 'Discharge Location', 'LOS'],
+        restkey='ICD9 Codes',
+        startline=2,
+        float_fields=['LOS'],
+        datetime_fields=['Admit', 'Discharge'])
+    icd9 = extract.from_csv(
+        filename='icd9.csv',
+        encoding='latin-1',
+        fieldnames=['code', 'desc'],
+        startline=2)
 
-    return icd9_lookup
 
-def parse_data(fname):
-    fieldnames = ['Unit#', 'Account#', 'Name', 'Age', 'Admit', 'Discharge', 'Discharge Location', 'LOS']
-    with open(fname, newline='') as f:
-        reader = csv.DictReader(f, fieldnames=fieldnames, restkey='ICD9 Codes')
-        reader.__next__()
-        data = [row for row in reader]
+    # Transform
+    # ------------------------------------------------------------------------
+    # Get list of ICD9 codes represented in data
+    icd9_lookup = transform.to_dict(icd9, 'code', 'desc')
+    icd9_codes = transform.unique_values(data, 'ICD9 Codes')
+    icd9_descs = [icd9_lookup.get(code, '[Unknown]') for code in icd9_codes]
 
-    float_fields = ['LOS']
-    datetime_fields = ['Admit', 'Discharge']
-    for row in data:
-        for field in float_fields:
-            row[field] = row[field] and float(row[field])
-        for field in datetime_fields:
-            row[field] = row[field] and datetime.strptime(row[field], '%m/%d/%y')
-        row['ICD9 Categories'] = [code.split('.')[0] for code in row['ICD9 Codes']]
+    # Calculate ICD9 categories for each row and use to remove records meeting exclusion criteria
+    transform.calc_field(data, 'ICD9 Categories', lambda row: [code.split('.')[0] for code in row['ICD9 Codes']])
+    data = transform.filter(data, lambda row: not any([
+        '480' in row['ICD9 Categories'],    # Pneumonia
+        '461' in row['ICD9 Categories'],    # Sinusitis
+        '466' in row['ICD9 Categories'],    # Bronchiolitis
+        '933' in row['ICD9 Categories'],    # Foreign body in airway
+        '934' in row['ICD9 Categories'],    # -
+        '935.0' in row['ICD9 Codes'],       # Foreign body in mouth
+        '277.02' in row['ICD9 Codes'],      # CF with pulm
+        '277.09' in row['ICD9 Codes'],      # CF other
+    ]))
+    
+    # Make human readable fields
+    readable = deepcopy(data)
+    transform.calc_field(readable, 'Diagnosis', lambda row: ','.join(row['ICD9 Codes']))
 
-    return data
+    # Remove PHI
+    anonymized = transform.remove_fields(data, ['Unit#', 'Account#', 'Name', 'Age', 'ICD9 Categories', 'Discharge', 'Discharge Location'])
 
-def collect_diagnoses(data):
-    codes = [row['ICD9 Codes'] for row in data]
-    codes = list(set(itertools.chain.from_iterable(codes)))
 
-    icd9_lookup = load_icd9_lookup()
-    icd = [(c, icd9_lookup.get(c) or '[Unknown]') for c in codes]
-    icd = dict(icd)
-
-    return icd
-
-def filter_exclusion(data):
-    filtered = []
-    for row in data:
-        remove = any([
-            '480' in row['ICD9 Categories'],    # Pneumonia
-            '461' in row['ICD9 Categories'],    # Sinusitis
-            '466' in row['ICD9 Categories'],    # Bronchiolitis
-            '933' in row['ICD9 Categories'],    # Foreign body in airway
-            '934' in row['ICD9 Categories'],    # -
-            '935.0' in row['ICD9 Codes'],       # Foreign body in mouth
-            '277.02' in row['ICD9 Codes'],      # CF with pulm
-            '277.09' in row['ICD9 Codes'],      # CF other
-        ])
-        if not remove:
-            filtered.append(row)
-
-    return filtered
-
-def remove_fields(data, remove_fields):
-    remove_fields = set(remove_fields)
-    for row in data:
-        fields = row.keys()
-        field_to_remove = remove_fields.intersection(fields)
-        for field in field_to_remove:
-            del row[field]
-
-    return data
-
-def main(fname, outfile):
-    # Read main data file
-    data = parse_data(fname)
-    diagnoses = collect_diagnoses(data)
-
-    # Remove records meeting exclusion criteria
-    data = filter_exclusion(data)
-
-    # Remove all PHI
-    remove_fields(data, ['Unit#', 'Account#', 'Name', 'Age', 'ICD9 Categories', 'Discharge', 'Discharge Location'])
-
-    output(data, outfile)
-
-def output(data, outfile):
-    # Convert to JS
-    dthandler = lambda obj: (
-        obj.isoformat()
-        if isinstance(obj, datetime)
-        else None)
-    js_data = json.dumps(data, default=dthandler)
-
-    if not outfile:
-        print(js_data)
-    else:
-        with open(outfile + '.js', 'w') as out:
-            out.write('data = %s;' % js_data)
-        with open(outfile + '.csv', 'w') as out:
-            writer = csv.writer(out)
-            writer.writerow(['Admit', 'LOS', 'ICD9 Codes'])
-            for row in data: writer.writerow([row['Admit'], row['LOS'], ' '.join(row['ICD9 Codes'])])
+    # Load
+    # ------------------------------------------------------------------------
+    load.to_csv(readable, 'data.csv', ['Admit', 'LOS', 'Diagnosis'])
+    load.to_js(anonymized, 'data.js')
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('Usage: parse.py <excel file> [output file]')
-        sys.exit(1)
-
-    infile = sys.argv[1]
-    outfile = None if len(sys.argv) < 3 else sys.argv[2]
-    main(infile, outfile)
+    main()
