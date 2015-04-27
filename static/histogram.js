@@ -1,13 +1,19 @@
 histogram = function() {
-    var d3_layout_histogramBinSturges = function(range, values) { 
-        return d3_layout_histogramBinFixed(range, Math.ceil(Math.log(values.length) / Math.LN2 + 1)); 
+    var defaultRanger = function(values) { 
+        return [Math.min.apply(this, values), Math.max.apply(this, values)]; 
     }
-    var d3_layout_histogramBinFixed = function(range, n) {
-        var x = -1, b = +range[0], m = Math.ceil((range[1] - b) / n), f = [];
-        while (++x <= n) f[x] = m * x + b;
+
+    var defaultBinner = function(range, values, numbins) { 
+        var b = +range[0],
+            n = numbins || Math.ceil(Math.log(values.length) / Math.LN2 + 1),
+            m = Math.ceil((range[1] - b) / n),
+            f = [];
+        for (var x = 0; x <= n; x++) { 
+            f.push(m * x + b); 
+        }
         return f;
     }
-    var d3_layout_histogramRange = function(values) { return [Math.min.apply(this, values), Math.max.apply(this, values)]; }
+
     var bisect = function(arr, x, lo, hi) {
         if (arguments.length < 3) lo = 0;
         if (arguments.length < 4) hi = arr.length;
@@ -19,13 +25,12 @@ histogram = function() {
         return lo;
     }
 
-    var valuer = Number,
-        ranger = d3_layout_histogramRange,
-        binner = d3_layout_histogramBinSturges;
+    var ranger = defaultRanger,
+        binner = defaultBinner;
 
     var histogram = function(data) {
         var bins = [],
-            values = data.map(valuer, this).filter(function(v) { return typeof v === 'number'; }),
+            values = data,
             range = ranger.call(this, values, i),
             thresholds = binner.call(this, range, values, i),
             bin, i = -1,
@@ -34,7 +39,7 @@ histogram = function() {
             x;
         while (++i < m) {
             bin = bins[i] = [];
-            bin.dx = thresholds[i + 1] - (bin.x = thresholds[i]);
+            bin.x = thresholds[i];
             bin.y = 0;
         }
         if (m > 0) {
@@ -48,13 +53,14 @@ histogram = function() {
                 }
             }
         }
+        
+        bins.dx = thresholds[1] - thresholds[0];
+        bins.values = [];
+        for (i = 0; i < bins.length; i++) {
+            bins.values.push(bins[i].length);
+        }
         return bins;
     }
-    histogram.value = function(x) {
-        if (!arguments.length) return valuer;
-        valuer = (typeof x === "function") ? x : function() { return x; };
-        return histogram;
-    };
     histogram.range = function(x) {
         if (!arguments.length) return ranger;
         ranger = (typeof x === "function") ? x : function() { return x; }
@@ -63,15 +69,17 @@ histogram = function() {
     histogram.bins = function(x) {
         if (!arguments.length) return binner;
         if (typeof x === "number") {
-            binner = function(range) {
-                return d3_layout_histogramBinFixed(range, x);
-            }
+            binner = function(range) { return defaultBinner(range, null, x); }
         } else if (typeof x === "function") {
             binner = x
         } else {
             binner = function() { return x; }
         }
         return histogram;
+    };
+    histogram.values = function() {
+        var v = [], bins = this.bins;
+
     };
     return histogram;
 };

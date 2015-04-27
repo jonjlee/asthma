@@ -11,7 +11,7 @@
 
     <link href="static/thirdparty/bootstrap-3.3.4/css/bootstrap.min.css" rel="stylesheet">
     <link href="static/thirdparty/bootstrap-slider-4.8.1/css/bootstrap-slider.min.css" rel="stylesheet">
-    <link href="stats.css" rel="stylesheet">
+    <link href="view.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -26,7 +26,7 @@
         <div class="col-md-2 sidebar">
           <ul class="nav nav-sidebar">
             <li class="section-title">Settings</li>
-            <li class="section">
+            <li class="section hidden">
               <div>Dates for baseline data:</div>
               <input id="baseline-range" class="slider" type="text"/>
             </li>
@@ -35,7 +35,7 @@
               <input id="comparator-range" class="slider" type="text"/>
             </li>
             <li class="section">
-              <div>Max days for readmission:</div>
+              <div>Days between readmission:</div>
               <input id="readmission-days" class="slider" type="text"/>
             </li>
           </ul>
@@ -57,7 +57,7 @@
           <h2 class="sub-header">Secondary Outcomes</h2>
           <div class="row">
             <div class="col-md-12">
-              <h4 class="sub-header">Readmissions</h4>
+              <h4 class="sub-header">Visits leading to readmission</h4>
               <div id="readmits-graph" class="graph"></div>
             </div>
           </div>
@@ -65,10 +65,23 @@
           <h2 class="sub-header">Statistics</h2>
           <div class="row">
               <div class="col-md-12">
+                <h4>Sample Size</h4>
+                <table id="n-table" class="table"></table>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-md-12">
                 <h4>Length of Stay</h4>
                 <table id="stats-table" class="table"></table>
               </div>
           </div>
+          <div class="row">
+              <div class="col-md-12">
+                <h4>Readmissions</h4>
+                <table id="readmit-table" class="table"></table>
+              </div>
+          </div>
+
           <h2 class="sub-header">Data</h2>
           Raw data (anonymized): <a href="https://raw.githubusercontent.com/jonjlee/asthma/gh-pages/data.csv">CSV</a>
         </div>
@@ -120,7 +133,7 @@
     <![endif]-->
     <script src="utils.js"></script>  <!-- utility functions -->
     <script src="data.js"></script>   <!-- include data set definitions -->
-    <script src="main.js"></script>   <!-- definitions for init(), refresh(), refreshData() -->
+    <script src="app.js"></script>   <!-- definitions for init(), refresh(), refreshData() -->
     <script> _init(); </script>
   </body>
 </html>

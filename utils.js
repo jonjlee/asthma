@@ -1,15 +1,19 @@
 $(function() {
+    // Global settings object, which should be modified by controls in sidebar
+    // and used by calc()
+    settings = {};
+
     // Returns defaultVal if arg is undefined - useful for 
     // providing default function parameter values
     argDefault = function(arg, defaultVal) {
-        return (typeof(arg) === 'undefined') ? defaultVal : arg;
+        return (typeof arg === 'undefined' || arg === null) ? defaultVal : arg;
     }
 
+    // Schedule calc() and render() after 500ms of no activity in sidebar
     var queueCalc = _.debounce(function() {
         calc();
         render();
     }, 500);
-    settings = {};
 
     // Return the months between the start and end dates
     // (e.g. ['1/2001', '12/2002'] -> [new Date('1/1/2001'), new Date('2/1/2001'), ...]
@@ -22,12 +26,12 @@ $(function() {
             months = [];
         while (current <= end) {
             months.push(new Date(current));
-            current.add(1, 'M');
+            current.add(1, 'month');
         }
         return months;
     }
 
-    var MONTHS_TEXT_FORMAT = 'MMM YYYY';
+    var MONTHS_TEXT_FORMAT = 'MMM YY';
     monthsText = function(monthsList) {
         if (!Array.isArray(monthsList)) {
             return moment(monthsList).format(MONTHS_TEXT_FORMAT);
@@ -96,14 +100,32 @@ $(function() {
         return $slider;
     }
 
-    drawBarGraph = function(elId, x, y, options) {
-        x = argDefault(x, []);
-        y = argDefault(y, []);
+    drawBarGraph = function(elId, options) {
         options = argDefault(options, {});
 
-        var dd = [];
-        for (var i = 0; i < x.length; i++) {
-            dd.push([x[i], y[i]]);
+        // Data to plot
+        var y = argDefault(options.y, []),
+            x = argDefault(options.x, _.range(0, y.length)),
+            dd = _.map(x, function(xval, idx) { return [xval, y[idx]]; });
+
+        // Graph configuration options
+        var colors = argDefault(options.colors, ['#00A8F0', '#C0D800', '#9440ED']),
+            xaxis = argDefault(options.xaxis, Flotr.defaultOptions.xaxis),
+            yaxis = argDefault(options.yaxis, Flotr.defaultOptions.yaxis),
+            grid = argDefault(options.grid, { verticalLines: false }),
+            trackFormatter = argDefault(options.trackFormatter, Flotr.defaultTrackFormatter),
+            mouse = argDefault(options.mouse, {
+                position: 'ne',
+                track: true,
+                trackFormatter: trackFormatter });
+
+        // Provide x-axis labels to Flotr if specified
+        if (!options.xaxis && options.xlabels) {
+            xaxis = {
+                min: -0.7,
+                max: _.max(x) + 0.7,
+                tickFormatter: function (x) { return options.xlabels[parseInt(x)] || ''; }
+            }
         }
         Flotr.draw($(elId)[0], [
                 { 
@@ -118,28 +140,52 @@ $(function() {
                 }
             ], {
                 colors: options.colors || ['#00A8F0', '#C0D800', '#9440ED'],
-                xaxis: options.xaxis || {},
-                yaxis: options.yaxis || {},
-                mouse: options.mouse || {
-                    position: 'ne',
-                    track: true,
-                    trackDecimals: 0,
-                    sensibility: 30,
-                    trackY: true,
-                },
+                xaxis: xaxis,
+                yaxis: yaxis,
+                grid: grid,
+                mouse: mouse,
             }
         );
     }
 
-    drawLineGraph = function(elId, x, y, options) {
-        x = argDefault(x, []);
-        y = argDefault(y, []);
+    // Draw a line graph using the data in options.x and options.y.
+    // Only options.y is required. 
+    // options = {
+    //      x: [1, 2, ...],                                     // Default is 0 to y.length.
+    //      y: [10, 11, ...],                                   
+    //      xlabels: ['Monday', 'Tuesday', ...],                // Ignored if xaxis is specified.
+    //      trackFormatter: { Flotr mouse.trackFormatter() },   // Ignored if mouse is specified.
+    //      mouse: { Flotr mouse },
+    //      colors: ['#00A8F0', ...],
+    // }
+    drawLineGraph = function(elId, options) {
         options = argDefault(options, {});
 
-        var dd = [];
-        for (var i = 0; i < x.length; i++) {
-            dd.push([x[i], y[i]]);
+        // Data to plot
+        var y = argDefault(options.y, []),
+            x = argDefault(options.x, _.range(0, y.length));
+
+        // Graph configuration options
+        var colors = argDefault(options.colors, ['#00A8F0', '#C0D800', '#9440ED']),
+            xaxis = argDefault(options.xaxis, Flotr.defaultOptions.xaxis),
+            yaxis = argDefault(options.yaxis, Flotr.defaultOptions.yaxis),
+            trackFormatter = argDefault(options.trackFormatter, Flotr.defaultTrackFormatter),
+            mouse = argDefault(options.mouse, {
+                position: 'ne',
+                track: true,
+                sensibility: 30,
+                trackFormatter: trackFormatter });
+
+        // Provide x-axis labels to Flotr if specified
+        if (!options.xaxis && options.xlabels) {
+            xaxis = {
+                min: -0.2,
+                max: _.max(x) + 0.2,
+                tickFormatter: function (x) { return options.xlabels[parseInt(x)] || ''; }
+            }
         }
+
+        var dd = _.map(x, function(xval, idx) { return [xval, y[idx]]; })
         Flotr.draw($(elId)[0], [
                 { 
                     data: dd,
@@ -152,18 +198,49 @@ $(function() {
                     },
                 }
             ], {
-                colors: options.colors || ['#00A8F0', '#C0D800', '#9440ED'],
-                xaxis: options.xaxis || {},
-                yaxis: options.yaxis || {},
-                mouse: options.mouse || {
-                    position: 'ne',
-                    track: true,
-                    trackDecimals: 0,
-                    sensibility: 30,
-                    trackY: true,
-                },
+                colors: colors,
+                xaxis: xaxis,
+                yaxis: yaxis,
+                mouse: mouse,
             }
         );
+    }
+
+    // Draw a line graph using the data in options.y with the x-axis specified
+    // by options.x0 and options.dx.
+    // options = {
+    //      x0: 0,                                              // start of first bin
+    //      dx: 5,                                              // size of bins
+    //      y: [10, 11, ...],                                   // values of bins
+    //      xlabels: ['Monday', 'Tuesday', ...],                // Override default x labels generated from x0 and dx
+    //      trackFormatter: { Flotr mouse.trackFormatter() },   // Ignored if mouse is specified.
+    //      mouse: { Flotr mouse },
+    //      colors: ['#00A8F0', ...],
+    // }
+    drawHistogram = function(elId, options) {
+        options = argDefault(options, {});
+
+        // Data to plot
+        var y = argDefault(options.y, []),
+            x = argDefault(options.x, _.range(0, y.length)),
+            dd = _.map(x, function(xval, idx) { return [xval, y[idx]]; });
+
+        // Create x-axis labels for histogram based on x_0 and dx (i.e. bin size)
+        var xaxis = argDefault(options.xaxis, Flotr.defaultOptions.xaxis),
+            x0 = argDefault(options.x0, 0),
+            dx = argDefault(options.dx, 1);
+        xaxis.min = argDefault(xaxis.min, -0.7);
+        xaxis.max = argDefault(xaxis.max, _.max(x)+0.7);
+        if (options.xlabels) {
+            xaxis.tickFormatter = function(x) { return options.xlabels[parseInt(x)] || ''; };
+        } else {
+            xaxis.tickFormatter = function(x) { return (parseInt(x)*dx + x0) + ' - ' + ((parseInt(x)+1)*dx + x0 - 1)};
+        }
+
+        // Mouse tracker
+        var trackFormatter = function(v) { return '[' + xaxis.tickFormatter(v.x) + ']: ' + parseInt(v.y); }
+        
+        return drawBarGraph(elId, { x: x, y: y, xaxis: xaxis, trackFormatter: trackFormatter });
     }
 
     var tableTpl = _.template(

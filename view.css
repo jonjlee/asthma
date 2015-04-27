@@ -1,13 +1,4 @@
 /*
- * Global add-ons
- */
-
-.sub-header {
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-/*
  * Sidebar
  */
 
@@ -49,6 +40,7 @@
 .nav-sidebar > li.section {
   padding-left: 30px;
   padding-right: 20px;
+  padding-bottom: 20px;
 }
 .nav-sidebar > li > a {
     padding-left: 20px;
@@ -71,7 +63,6 @@
 /*
  * Main content
  */
-
 .main {
   padding: 20px;
 }
@@ -87,7 +78,11 @@
 .main h4 {
   padding-bottom: 10px;
 }
-.main .graph {
+.sub-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+.graph {
   width: 100%;
   height: 184px;
   margin: 10px 10px;
