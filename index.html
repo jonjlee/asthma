@@ -10,6 +10,7 @@
     <title>OUHSC Asthma QI</title>
 
     <link href="static/thirdparty/bootstrap-3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/thirdparty/bootstrap-slider-4.8.1/css/bootstrap-slider.min.css" rel="stylesheet">
     <link href="stats.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -22,15 +23,24 @@
   <body>
     <div class="container-fluid">
       <div class="row">
-        <div class="col-md-2 sidebar hidden">
+        <div class="col-md-2 sidebar">
           <ul class="nav nav-sidebar">
             <li class="section-title">Settings</li>
             <li class="section">
-              <div><em>Add analysis parameters here</em></div>
+              <div>Dates for baseline data:</div>
+              <input id="baseline-range" class="slider" type="text"/>
+            </li>
+            <li class="section">
+              <div>Months per year to compare:</div>
+              <input id="comparator-range" class="slider" type="text"/>
+            </li>
+            <li class="section">
+              <div>Max days for readmission:</div>
+              <input id="readmission-days" class="slider" type="text"/>
             </li>
           </ul>
         </div>
-        <div class="col-md-12 col-md-offset-0 main">
+        <div class="col-md-10 col-md-offset-2 main">
           <h2 class="sub-header">Primary Outcomes</h2>
           <div class="row">
             <div class="col-md-12">
@@ -38,7 +48,7 @@
               <div id="graph1" class="graph"></div>
             </div>
           </div>
-          <div class="row">
+          <div class="row hidden">
             <div id="histograms" class="col-md-12">
               <h4 class="sub-header">Histograms by Time Period</h4>
             </div>
@@ -47,7 +57,7 @@
           <h2 class="sub-header">Secondary Outcomes</h2>
           <div class="row">
             <div class="col-md-12">
-              <h4 class="sub-header">Readmissions within 15 days</h4>
+              <h4 class="sub-header">Readmissions</h4>
               <div id="readmits-graph" class="graph"></div>
             </div>
           </div>
@@ -55,6 +65,7 @@
           <h2 class="sub-header">Statistics</h2>
           <div class="row">
               <div class="col-md-12">
+                <h4>Length of Stay</h4>
                 <table id="stats-table" class="table"></table>
               </div>
           </div>
@@ -99,14 +110,17 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="static/thirdparty/jquery-1.11.2.min.js"></script>
     <script src="static/thirdparty/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script src="static/thirdparty/bootstrap-slider-4.8.1/bootstrap-slider.min.js"></script>
+    <script src="static/thirdparty/moment.js"></script>
+    <script src="static/thirdparty/simple_statistics.js"></script>
+    <script src="static/histogram.js"></script>
     <script src="static/thirdparty/flotr2.min.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" src="/static/thirdparty/FlashCanvas/bin/flashcanvas.js"></script>
     <![endif]-->
-    <script src="static/thirdparty/moment.js"></script>
-    <script src="static/thirdparty/simple_statistics.js"></script>
-    <script src="static/histogram.js"></script>
-    <script src="data.js"></script>
-    <script src="stats.js"></script>
+    <script src="utils.js"></script>  <!-- utility functions -->
+    <script src="data.js"></script>   <!-- include data set definitions -->
+    <script src="main.js"></script>   <!-- definitions for init(), refresh(), refreshData() -->
+    <script> _init(); </script>
   </body>
 </html>
