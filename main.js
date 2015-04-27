@@ -59,7 +59,6 @@ $(function() {
             return _.filter(d, function(row) { return row.readmit; });
         });
         numReadmits = _.map(readmits, function(d) { return d.length; });
-        console.log(readmits)
     };
 
     render = function() {
