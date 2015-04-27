@@ -72,7 +72,7 @@ def main():
     # ------------------------------------------------------------------------
     load.to_csv(readable, 'data.csv', ['pid', 'Admit', 'LOS', 'Diagnosis'])
     load.to_js(anonymized, 'data.js')
-    load.to_xls(icd9_descs, 'data.xls', ['Code', 'Description'])
+    load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
 
 if __name__ == '__main__':
     main()
