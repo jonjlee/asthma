@@ -6,7 +6,6 @@ $(function() {
     }
 
     var queueCalc = _.debounce(function() {
-        console.log('gi')
         calc();
         render();
     }, 500);
