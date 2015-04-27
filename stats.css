@@ -59,8 +59,12 @@
   color: #fff;
   background-color: #428bca;
 }
-#threshold-slider {
-  width: 100%;
+.slider {
+  width: 100% !important;
+  margin-top: 35px;
+}
+.slider-selection {
+  background: #BFD0E6;
 }
 
 
