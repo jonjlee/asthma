@@ -25,7 +25,7 @@ def main():
         float_fields=['LOS'],
         datetime_fields=['Admit', 'Discharge'])
     icd9 = extract.from_csv(
-        filename='icd9.csv',
+        filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
         fieldnames=['code', 'desc'],
         startline=2)
@@ -36,10 +36,11 @@ def main():
     # Get list of ICD9 codes represented in data
     icd9_lookup = transform.to_dict(icd9, 'code', 'desc')
     icd9_codes = transform.unique_values(data, 'ICD9 Codes')
+    icd9_codes_no_dot = [code.replace('.','') for code in icd9_codes]
     icd9_descs = [{
-            'Code': code,
+            'Code': icd9_codes[idx],
             'Description': icd9_lookup.get(code, '[Unknown]')
-        } for code in icd9_codes]
+        } for idx,code in enumerate(icd9_codes_no_dot)]
     transform.sort(icd9_descs, 'Code')
 
     # Calculate ICD9 categories for each row and use to remove records meeting exclusion criteria
