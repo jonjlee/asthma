@@ -18,7 +18,7 @@ $(function() {
     // Return the months between the start and end dates
     // (e.g. ['1/2001', '12/2002'] -> [new Date('1/1/2001'), new Date('2/1/2001'), ...]
     months = function(dateRange) {
-        if (!Array.isArray(dateRange)) { return []; }
+        if (!_.isArray(dateRange)) { return []; }
         start = moment(dateRange[0], ['MM/YYYY', 'MM/YY']);
         end = moment(dateRange[1], ['MM/YYYY', 'MM/YY']);
 
@@ -33,7 +33,7 @@ $(function() {
 
     var MONTHS_TEXT_FORMAT = 'MMM YY';
     monthsText = function(monthsList) {
-        if (!Array.isArray(monthsList)) {
+        if (!_.isArray(monthsList)) {
             return moment(monthsList).format(MONTHS_TEXT_FORMAT);
         }
         return _.map(monthsList, function(m) { return moment(m).format(MONTHS_TEXT_FORMAT); });
@@ -85,7 +85,7 @@ $(function() {
             focus: true,
             tooltip: 'always',
             formatter: function(rng) {
-                if (Array.isArray(rng)) {
+                if (_.isArray(rng)) {
                     return text[rng[0]] + ' - ' + text[rng[1]];
                 }
             }

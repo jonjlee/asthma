@@ -25,7 +25,6 @@
       <div class="row">
         <div class="col-md-2 sidebar">
           <ul class="nav nav-sidebar">
-            <li class="section-title">Settings</li>
             <li class="section hidden">
               <div>Dates for baseline data:</div>
               <input id="baseline-range" class="slider" type="text"/>
@@ -124,16 +123,17 @@
     <script src="static/thirdparty/jquery-1.11.2.min.js"></script>
     <script src="static/thirdparty/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script src="static/thirdparty/bootstrap-slider-4.8.1/bootstrap-slider.min.js"></script>
-    <script src="static/thirdparty/moment.js"></script>
+    <script src="static/thirdparty/moment.min.js"></script>
     <script src="static/thirdparty/simple_statistics.js"></script>
-    <script src="static/histogram.js"></script>
+    <script src="static/thirdparty/lodash-3.7.0.min.js"></script>
     <script src="static/thirdparty/flotr2.min.js"></script>
+    <script src="static/histogram.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" src="/static/thirdparty/FlashCanvas/bin/flashcanvas.js"></script>
     <![endif]-->
     <script src="utils.js"></script>  <!-- utility functions -->
     <script src="data.js"></script>   <!-- include data set definitions -->
-    <script src="app.js"></script>   <!-- definitions for init(), refresh(), refreshData() -->
+    <script src="app.js"></script>   <!-- definitions for init(), calc(), render() -->
     <script> _init(); </script>
   </body>
 </html>
