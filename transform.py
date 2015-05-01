@@ -1,6 +1,11 @@
 import itertools
 from copy import deepcopy
 
+def rename(data, field_mapping):
+    for row in data:
+        for src, dst in field_mapping.items():
+            row[dst] = row.pop(src)
+
 def unique_values(data, field):
     values = [row[field] for row in data]
     values = list(set(itertools.chain.from_iterable(values)))
@@ -13,7 +18,6 @@ def to_dict(data, key_field, val_field):
 def calc_field(data, new_field, calc_fn):
     for row in data:
         row[new_field] = calc_fn(row)
-    return data
 
 def sort(data, field, descending=False):
     data.sort(key=lambda row: row[field], reverse=descending)
@@ -27,17 +31,23 @@ def filter(data, filter_fn):
     return filtered
 
 def remove_fields(data, remove_fields):
-    '''Returns a copy of data without the given fields. Data should be a list of maps.
-    Fields names are not case-sensitive.'''
+    '''Returns a copy of data without the given fields. Data should be a list of maps.'''
     filtered = deepcopy(data)
-    remove_fields = set(remove_fields)
-    remove_fields = [f.lower() for f in remove_fields]
     for row in filtered:
-        fields = list(row.keys())
-        fields_lower = [f.lower() for f in fields]
-        for i in range(0, len(fields)):
-            if fields_lower[i] in remove_fields:
-                del row[fields[i]]
+        for field in row.keys():
+            if field in remove_fields:
+                del row[field]
+    return filtered
+
+def retain_fields(data, fields):
+    '''Returns a copy of data with only the given fields.'''
+    filtered = []
+    for row in data:
+        filtered_row = {}
+        filtered.append(filtered_row)
+        for col in row.keys():
+            if col in fields:
+                filtered_row[col] = row[col]
     return filtered
 
 def id_transform(data, id_field, new_field, start_id=1):
@@ -58,3 +68,47 @@ def id_transform(data, id_field, new_field, start_id=1):
             id_dict[src_id] = dst_id
             start_id = start_id + 1
         row[new_field] = dst_id
+
+def cols_to_list(data, target, fields, ignore_empty=True):
+    '''
+    Combine columns in a row that represent an array (e.g. {'Dx1': x, 'Dx2': y} -> 'Dx': [x, y])
+    '''
+    for row in data:
+        lst = []
+        for f in fields:
+            v = row.get(f)
+            if v or not ignore_empty:
+                lst.append(v)
+        row[target] = lst
+
+def rows_to_list(data, idkey, target, field, ignore_empty=True):
+    '''
+    Combine data from adjacent rows into an array when they have the same id.
+    e.g. [{'ID':1, 'med':x}, {'ID':1, 'med':y}] -> {'ID':1, 'meds':[x,y]}
+    '''
+    lst = []
+    lastid = None
+    for row in data:
+        if row[idkey] and row[idkey] != lastid:
+            lst = []
+            row[target] = lst
+
+        v = row.get(field)
+        if v or not ignore_empty:
+            lst.append(v)
+        
+        lastid = row[idkey] or lastid
+
+def unique(data, key):
+    '''
+    Remove all but the first adjacent row with a repeating value in the field key except.
+    e.g. [{'id':1, 'd1':x}, {'id':2, 'd1':y}] -> [{'id':1, 'd1':x}]
+    '''
+    filtered = []
+    lastid = None
+    for row in data:
+        if row[key] and row[key] != lastid:
+            filtered.append(row)
+        lastid = row[key] or lastid
+    
+    return filtered

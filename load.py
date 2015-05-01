@@ -9,13 +9,29 @@ from pprint import pprint
 def to_stdout(data):
     pprint(data)
 
-def to_json(data, filename=None):
+def to_json(data, fieldnames=None, keys=None, filename=None):
+    if not fieldnames:
+        # Convert all fields in data
+        filtered = data        
+    else:
+        # default json key names to be the same as in data
+        keys = keys or fieldnames
+
+        # Retain only fields in fieldnames
+        filtered = []
+        for row in data:
+            filtered_row = {}
+            filtered.append(filtered_row)
+            for col in row.keys():
+                for i,col in enumerate(fieldnames):
+                    filtered_row[keys[i]] = row[col]
+
     # Convert to JSON object
     dthandler = lambda obj: (
         obj.isoformat()
         if isinstance(obj, datetime)
         else None)
-    js_data = json.dumps(data, default=dthandler)
+    js_data = json.dumps(filtered, default=dthandler)
 
     if filename:
         with open(filename, 'w') as out:
@@ -23,11 +39,10 @@ def to_json(data, filename=None):
 
     return js_data
 
-def to_js(data, filename=None, varname='data'):
-    js_data = to_json(data)
-    if filename:
-        with open(filename, 'w') as out:
-            out.write('%s = %s;' % (varname, js_data))
+def to_js(data, filename, fieldnames=None, keys=None, varname='data'):
+    js_data = to_json(data, fieldnames, keys)
+    with open(filename, 'w') as out:
+        out.write('%s = %s;' % (varname, js_data))
     return js_data
 
 def to_csv(data, filename, fieldnames, headers=None):

@@ -2,7 +2,7 @@ import csv
 import xlrd
 from datetime import datetime
 
-def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, float_fields=[], datetime_fields=[], datetime_format='%m/%d/%y'):
+def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, float_fields=[], datetime_fields=[], date_format='%m/%d/%y', time_format='%H:%M'):
     '''Read a CSV file into a list of dicts. fieldnames and restkey are passed directly
     to the csv module.
 
@@ -25,8 +25,21 @@ def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, 
     # Parse non-string fields
     for row in data:
         for field in float_fields:
-            row[field] = row[field] and float(row[field])
+            try:
+                row[field] = row[field] and float(row[field])
+            except ValueError: pass
         for field in datetime_fields:
-            row[field] = row[field] and datetime.strptime(row[field], datetime_format)
+            if isinstance(field, list):
+                # Parse date and time
+                [datefield, timefield] = field
+                if row[datefield] and row[timefield]:
+                    try:
+                        row[datefield] = datetime.strptime('%s %s' % (row[datefield], row[timefield]), '%s %s' % (date_format, time_format))
+                    except ValueError: pass
+            else:
+                # Parse date only
+                try:
+                    row[field] = row[field] and datetime.strptime(row[field], date_format)
+                except ValueError: pass
 
     return data
