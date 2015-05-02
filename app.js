@@ -74,16 +74,18 @@ $(function() {
             return _(d)
                 .pluck('Time to nebs (min)')
                 .filter(function(t) { return t != null; })
+                .map(function(t) { return t / 60; })
                 .value(); 
         });
         comparatorSteroidsTime = _.map(comparatorData, function(d) {
             return _(d)
                 .pluck('Time to steroids (min)')
                 .filter(function(t) { return t != null; })
+                .map(function(t) { return t / 60; })
                 .value(); 
         });
-        nebsMeans = _.map(comparatorNebsTime, function(arr) { return parseInt(ss.average(arr)); })
-        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return parseInt(ss.average(arr)); })
+        nebsMeans = _.map(comparatorNebsTime, function(arr) { return ss.average(arr).toFixed(2); })
+        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return ss.average(arr).toFixed(2); })
     };
 
     render = function() {
@@ -119,7 +121,7 @@ $(function() {
             yaxis: {
                 title: 'Hours',
                 autoscale: true,
-                autoscaleMargin: 0.2,
+                autoscaleMargin: 0.5,
             },
             trackFormatter: function(e) { return e.y + ' hrs'; }
         });
@@ -130,7 +132,7 @@ $(function() {
             yaxis: {
                 title: 'Hours',
                 autoscale: true,
-                autoscaleMargin: 0.2,
+                autoscaleMargin: 0.5,
             },
             trackFormatter: function(e) { return e.y + ' hrs'; }
         });
