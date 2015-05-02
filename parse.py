@@ -1,13 +1,14 @@
 #!/usr/bin/env python -B
 import extract, transform, load
 from copy import deepcopy
+import sys
 
 # Set up logging
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)-15s: %(message)s')
 
-def main():
+def main(limit=None):
     # Extract
     # ------------------------------------------------------------------------
     # Read and parse datasets. Functions in the extract module return data
@@ -24,7 +25,7 @@ def main():
         startline=2,
         float_fields=['LOS (Hrs)'],
         datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['Admin Date', 'Admin Time']],
-        limit=None)
+        limit=limit)
     icd9 = extract.from_csv(
         filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
@@ -40,7 +41,6 @@ def main():
         'Dis Date': 'Discharge',
         'Arrival Date': 'Arrival',
         'Triage Date': 'Triage',
-        'LOS (Hrs)': 'LOS',
     })
 
     # Combine rows from the same patient visit that represent an array
@@ -86,8 +86,8 @@ def main():
     ]))
 
     # Calculate other static fields
-    calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'First nebs', 'Nebs dose', 'Time to nebs (min)')
-    calc_time_to_med(data, ['medrol', 'orapred'], 'First steroids', 'Steroids dose', 'Time to steroids (min)')
+    calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'Nebs', 'Time to nebs')
+    calc_time_to_med(data, ['medrol', 'orapred'], 'Steroids', 'Time to steroids')
 
     # Make human readable fields
     logger.info('Formatting output...')
@@ -102,13 +102,14 @@ def main():
     # Load
     # ------------------------------------------------------------------------
     logger.info('Writing output...')
-    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Admit', 'Discharge', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'LOS', 'Visit Type', 'First nebs', 'Nebs dose', 'Time to nebs (min)', 'First steroids', 'Steroids dose', 'Time to steroids (min)', 'Med List', 'Micro', 'Diagnosis'])
-    load.to_js(data, 'data.js', ['Admit', 'pid', 'Visit Type', 'LOS', 'Diagnosis', 'Time to nebs (min)', 'Time to steroids (min)'])
+    load.to_js(data, 'data.js', ['Admit', 'pid', 'Visit Type', {'LOS (Hrs)': 'LOS'}, 'Diagnosis', 'Time to nebs', 'Time to steroids'])
+    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
+    load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
     load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
 
     logger.info('Done.')
 
-def calc_time_to_med(data, meds, med_key, dose_key, time_key):
+def calc_time_to_med(data, meds, med_key, time_key):
     def is_target_med(med_name):
         med_name = med_name.lower()
         for m in meds:
@@ -122,15 +123,15 @@ def calc_time_to_med(data, meds, med_key, dose_key, time_key):
         meds_given = [m for m in meds_given if is_target_med(m[0])]
         meds_given = sorted(meds_given, key=lambda x: x[2])
         if not t or not meds_given:
-            row[med_key], row[dose_key], row[time_key] = None, None, None
+            row[med_key], row[time_key] = None, None
         else:
             first_med = meds_given[0]
-            row[med_key] = first_med[0]
-            row[dose_key] = first_med[1]
-            row[time_key] = (first_med[2] - t).total_seconds() / 60
+            row[med_key] = '%s %s' % (first_med[1], first_med[0])
+            row[time_key] = '{0:.2f}'.format((first_med[2] - t).total_seconds() / 3600)
 
 def calc_time_to_first_neb(data):
     return 
 
 if __name__ == '__main__':
-    main()
+    limit = int(sys.argv[1]) if len(sys.argv) >= 2 else None
+    main(limit)

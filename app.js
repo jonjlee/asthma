@@ -69,19 +69,19 @@ $(function() {
             return parseFloat(p.toFixed(1));
         });
 
-        // Nebs for each date range
+        // Nebs & steroids for each date range
         comparatorNebsTime = _.map(comparatorData, function(d) {
             return _(d)
-                .pluck('Time to nebs (min)')
+                .pluck('Time to nebs')
                 .filter(function(t) { return t != null; })
-                .map(function(t) { return t / 60; })
+                .map(function(t) { return parseFloat(t); })
                 .value(); 
         });
         comparatorSteroidsTime = _.map(comparatorData, function(d) {
             return _(d)
-                .pluck('Time to steroids (min)')
+                .pluck('Time to steroids')
                 .filter(function(t) { return t != null; })
-                .map(function(t) { return t / 60; })
+                .map(function(t) { return parseFloat(t); })
                 .value(); 
         });
         nebsMeans = _.map(comparatorNebsTime, function(arr) { return ss.average(arr).toFixed(2); })
