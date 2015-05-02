@@ -5,6 +5,8 @@ $(function() {
             data[i]['Admit'] = new Date(data[i]['Admit']);
         }
 
+        bindParam('#visit-type', 'visitType');
+
         var allMonths = months(['1/2007', '12/2015']),
             comparatorMonths = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5],
             comparatorMonthsText = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
@@ -19,8 +21,15 @@ $(function() {
         // Note, this modifies data[].readmit
         calcReadmissions(data, settings.numDaysForReadmission);
 
+        // Filter by visit type
+        if (settings.visitType === 'ER only') {
+            filteredByVisitType = _.filter(data, function(row) { return row.type === 'ER'; });
+        } else {
+            filteredByVisitType = data;
+        }
+
         // baselineRange = [Date, Date]
-        baselineData = filterByMonths(data, settings.baselineRange);
+        baselineData = filterByMonths(filteredByVisitType, settings.baselineRange);
         baselineRangeText = monthsText(settings.baselineRange);
 
         // comparatorMonths = [int, int]
@@ -37,7 +46,7 @@ $(function() {
         });
         // comparatorRangeText = [dataset1, dataset2, ...]
         comparatorData = _.map(comparatorRanges, function(r) {
-            return filterByMonths(data, r);
+            return filterByMonths(filteredByVisitType, r);
         });
 
         // Length of stay for each date range
