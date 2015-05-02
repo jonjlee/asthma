@@ -2,7 +2,10 @@ import csv
 import xlrd
 from datetime import datetime
 
-def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, float_fields=[], datetime_fields=[], date_format='%m/%d/%y', time_format='%H:%M'):
+default_date_format = '%m/%d/%y'
+default_time_format = '%H:%M'
+
+def from_csv(filename, fieldnames, restkey=None, limit=None, encoding='utf-8', startline=1, float_fields=[], datetime_fields=[], date_format=default_date_format, time_format=default_time_format):
     '''Read a CSV file into a list of dicts. fieldnames and restkey are passed directly
     to the csv module.
 
@@ -17,10 +20,14 @@ def from_csv(filename, fieldnames, restkey=None, encoding='utf-8', startline=1, 
         reader = csv.DictReader(f, fieldnames=fieldnames, restkey=restkey)
         
         # Skip startline lines
-        for i in range(1, startline): reader.__next__()
+        for i in range(1, startline): next(reader)
         
         # Read entire file into memory
-        data = [row for row in reader]
+        if not limit:
+            data = [row for row in reader]
+        else:
+            data = []
+            for i in range(0, limit): data.append(next(reader))
 
     # Parse non-string fields
     for row in data:
