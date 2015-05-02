@@ -68,6 +68,22 @@ $(function() {
             var p = d.length / comparatorData[idx].length * 100;
             return parseFloat(p.toFixed(1));
         });
+
+        // Nebs for each date range
+        comparatorNebsTime = _.map(comparatorData, function(d) {
+            return _(d)
+                .pluck('Time to nebs (min)')
+                .filter(function(t) { return t != null; })
+                .value(); 
+        });
+        comparatorSteroidsTime = _.map(comparatorData, function(d) {
+            return _(d)
+                .pluck('Time to steroids (min)')
+                .filter(function(t) { return t != null; })
+                .value(); 
+        });
+        nebsMeans = _.map(comparatorNebsTime, function(arr) { return parseInt(ss.average(arr)); })
+        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return parseInt(ss.average(arr)); })
     };
 
     render = function() {
@@ -94,6 +110,29 @@ $(function() {
                 var x = parseInt(e.x);
                 return '[' + comparatorRangeText[x] + ']: ' + numVisitsCausingReadmit[x] + '/' + nsamples[x] + ' visits (' + e.y + '%)'; 
             }
+        });
+
+        // Nebs and steroids graphs
+        drawLineGraph('#nebs-graph', {
+            xlabels: comparatorRangeText,
+            y: nebsMeans,
+            yaxis: {
+                title: 'Hours',
+                autoscale: true,
+                autoscaleMargin: 0.2,
+            },
+            trackFormatter: function(e) { return e.y + ' hrs'; }
+        });
+        // LOS graph
+        drawLineGraph('#steroids-graph', {
+            xlabels: comparatorRangeText,
+            y: steroidsMeans,
+            yaxis: {
+                title: 'Hours',
+                autoscale: true,
+                autoscaleMargin: 0.2,
+            },
+            trackFormatter: function(e) { return e.y + ' hrs'; }
         });
 
         // Statistics
