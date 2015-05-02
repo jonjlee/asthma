@@ -23,7 +23,8 @@ def main():
         fieldnames=['Unit#', 'Account#', 'Name', 'Age', 'Sex', 'Wt (kg)', 'Race', 'ADM/SER Date', 'ADM/SER Time', 'Dis Date', 'Dis Time', 'Arrival Date', 'Arrival Time', 'Triage Date', 'Triage Time', 'ER Depart Date', 'ER Depart Time', 'Disch Location', 'LOS (Hrs)', 'Visit Type', 'Dx1', 'Dx2', 'Dx3', 'Dx4', 'Dx5', 'Dx6', 'Dx7', 'Dx8', 'Dx9', 'Dx10', 'Dx11', 'Dx12', 'Dx13', 'Dx14', 'Dx15', 'Dx16', 'Dx17', 'Dx18', 'Dx19', 'Dx20', 'Dx21', 'Dx22', 'Dx23', 'Dx24', 'Dx25', 'Dx26', 'Dx27', 'Dx28', 'Dx29', 'Dx30', 'Dx31', 'Dx32', 'Dx33', 'Dx34', 'Dx35', 'Dx36', 'Dx37', 'Dx38', 'Dx39', 'Dx40', 'Location1', 'Start Date1', 'Start Time1', 'End Date1', 'End Time1', 'Location2', 'Start Date2', 'Start Time2', 'End Date2', 'End Time2', 'Location3', 'Start Date3', 'Start Time3', 'End Date3', 'End Time3', 'Location4', 'Start Date4', 'Start Time4', 'End Date4', 'End Time4', 'Location5', 'Start Date5', 'Start Time5', 'End Date5', 'End Time5', 'Location6', 'Start Date6', 'Start Time6', 'End Date6', 'End Time6', 'Location7', 'Start Date7', 'Start Time7', 'End Date7', 'End Time7', 'Location8', 'Start Date8', 'Start Time8', 'End Date8', 'End Time8', 'Location9', 'Start Date9', 'Start Time9', 'End Date9', 'End Time9', 'Location10', 'Start Date10', 'Start Time10', 'End Date10', 'End Time10', 'Positive Culture: Test', 'Collection Date', 'Coll Time', 'Specimen Type', 'Organism ID', 'Medication', 'Admin Dose & Unit', 'Admin Date', 'Admin Time'],
         startline=2,
         float_fields=['LOS (Hrs)'],
-        datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Admin Date', 'Admin Time']])
+        datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['Admin Date', 'Admin Time']],
+        limit=None)
     icd9 = extract.from_csv(
         filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
@@ -34,14 +35,21 @@ def main():
     # ------------------------------------------------------------------------
     # Rename fields to be more friendly
     logger.info('Renaming fields...')
-    transform.rename(data, {'ADM/SER Date': 'Admit', 'Dis Date': 'DC', 'LOS (Hrs)': 'LOS'})
+    transform.rename(data, {
+        'ADM/SER Date': 'Admit',
+        'Dis Date': 'Discharge',
+        'Arrival Date': 'Arrival',
+        'Triage Date': 'Triage',
+        'LOS (Hrs)': 'LOS',
+    })
 
     # Combine rows from the same patient visit that represent an array
     # e.g. [{'ID':1, 'med':x}, {'ID':1, 'med':y}] -> {'ID':1, 'meds':[x,y]}
     logger.info('Collecting arrays...')
-    transform.rows_to_list(data, idkey='Admit', target='Cxs', field='Positive Culture: Test')
+    transform.rows_to_list(data, idkey='Admit', target='Micro', field='Organism ID')
     transform.rows_to_list(data, idkey='Admit', target='Meds', field='Medication')
     transform.rows_to_list(data, idkey='Admit', target='Med Times', field='Admin Date')
+    transform.rows_to_list(data, idkey='Admit', target='Med Doses', field='Admin Dose & Unit')
     data = transform.unique(data, 'Admit')
 
     # Combine cols in a row that represent an array (e.g. {'Dx1': x, 'Dx2': y} -> 'Dx': [x, y])
@@ -77,12 +85,15 @@ def main():
         '277.09' in row['ICD9 Codes'],      # CF other
     ]))
 
+    # Calculate other static fields
+    calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'First nebs', 'Nebs dose', 'Time to nebs (min)')
+    calc_time_to_med(data, ['medrol', 'orapred'], 'First steroids', 'Steroids dose', 'Time to steroids (min)')
+
     # Make human readable fields
     logger.info('Formatting output...')
     transform.calc_field(data, 'Diagnosis', lambda row: ';'.join(row['ICD9 Codes']))
-    transform.calc_field(data, 'Meds', lambda row: '; '.join(
-        ['%s %s' % (t.strftime('%m/%d/%y %H:%M'), med) for (med, t) in zip(row['Meds'], row['Med Times'])]
-    )[:20])
+    transform.calc_field(data, 'Med List', lambda row: ', '.join(set(row['Meds'])))
+    transform.calc_field(data, 'Micro', lambda row: row['Micro'] and '; '.join(row['Micro']) or None)
 
     # Generate an anonymous ID for each patient based on PHI
     logger.info('Anonymizing...')
@@ -91,12 +102,35 @@ def main():
     # Load
     # ------------------------------------------------------------------------
     logger.info('Writing output...')
-    keys = ['Admit', 'pid', 'LOS', 'Diagnosis'] # 'Unit#', 'Account#', 'Name', 
-    load.to_csv(data, 'data.csv', keys)
-    load.to_js(data, 'data.js', keys)
+    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Admit', 'Discharge', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'LOS', 'Visit Type', 'First nebs', 'Nebs dose', 'Time to nebs (min)', 'First steroids', 'Steroids dose', 'Time to steroids (min)', 'Med List', 'Micro', 'Diagnosis'])
+    load.to_js(data, 'data.js', ['Admit', 'pid', 'Visit Type', 'LOS', 'Diagnosis', 'Time to nebs (min)', 'Time to steroids (min)'])
     load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
 
     logger.info('Done.')
+
+def calc_time_to_med(data, meds, med_key, dose_key, time_key):
+    def is_target_med(med_name):
+        med_name = med_name.lower()
+        for m in meds:
+            if m in med_name: 
+                return True
+        return False
+
+    for row in data:
+        t = row['Arrival']
+        meds_given = zip(row['Meds'], row['Med Doses'], row['Med Times'])
+        meds_given = [m for m in meds_given if is_target_med(m[0])]
+        meds_given = sorted(meds_given, key=lambda x: x[2])
+        if not meds_given:
+            row[med_key], row[dose_key], row[time_key] = None, None, None
+        else:
+            first_med = meds_given[0]
+            row[med_key] = first_med[0]
+            row[dose_key] = first_med[1]
+            row[time_key] = (first_med[2] - t).total_seconds() / 60
+
+def calc_time_to_first_neb(data):
+    return 
 
 if __name__ == '__main__':
     main()
