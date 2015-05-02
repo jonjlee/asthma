@@ -117,11 +117,11 @@ def calc_time_to_med(data, meds, med_key, dose_key, time_key):
         return False
 
     for row in data:
-        t = row['Arrival']
+        t = row['Triage']
         meds_given = zip(row['Meds'], row['Med Doses'], row['Med Times'])
         meds_given = [m for m in meds_given if is_target_med(m[0])]
         meds_given = sorted(meds_given, key=lambda x: x[2])
-        if not meds_given:
+        if not t or not meds_given:
             row[med_key], row[dose_key], row[time_key] = None, None, None
         else:
             first_med = meds_given[0]
