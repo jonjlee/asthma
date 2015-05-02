@@ -88,7 +88,7 @@ def main(limit=None):
     # Calculate other static fields
     logger.info('Calculating precomputed fields...')
     calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'Nebs', 'Time to nebs')
-    calc_time_to_med(data, ['medrol', 'decadron', 'orapred'], 'Steroids', 'Time to steroids')
+    calc_time_to_med(data, ['medrol', 'decadron', 'orapred', 'predni'], 'Steroids', 'Time to steroids')
 
     # Make human readable fields
     logger.info('Formatting output...')
