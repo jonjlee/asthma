@@ -39,6 +39,15 @@ $(function() {
         return _.map(monthsList, function(m) { return moment(m).format(MONTHS_TEXT_FORMAT); });
     }
 
+    bindParam = function(elId, varName) {
+        var $el = $(elId);
+        settings[varName] = $(elId).val();
+        $el.change(function() {
+            settings[varName] = $el.val();
+            queueCalc();
+        });
+    }
+
     // Create a slider widget to choose a value from a list. 
     // For example, makeRangeParam('#param1', _.range(1,100)) makes 
     // a slider to select a single number between 1 and 100.
