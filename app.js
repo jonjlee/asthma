@@ -40,6 +40,17 @@ $(function() {
                 moment(year+1 + '-' + settings.comparatorMonths[1], 'YYYY-MM').toDate(),
             ];
         });
+        // // Generate monthly data
+        // comparatorRanges = [];
+        // for (var i = 2007; i <= 2015; i++) {
+        //     for (var j = 1; j <= 12; j++) {
+        //         if (j<10) {
+        //             comparatorRanges.push([new Date(i + '-0' + j), new Date(i + '-0' + j)]);
+        //         } else {
+        //             comparatorRanges.push([new Date(i + '-' + j), new Date(i + '-' + j)]);
+        //         }
+        //     }
+        // }
         // comparatorRangeText = ['Oct 2007 - Mar 2008', ...]
         comparatorRangeText = _.map(comparatorRanges, function(r) {
             return monthsText(r).join(' - ');
@@ -57,17 +68,17 @@ $(function() {
 
         // LOS stats
         nsamples = _.map(comparatorLos, function(arr) { return arr.length; }), 
-        medians = _.map(comparatorLos, function(arr) { return ss.median(arr).toFixed(2); }),
-        mads = _.map(comparatorLos, function(arr) { return ss.mad(arr).toFixed(2); }),
-        means = _.map(comparatorLos, function(arr) { return ss.mean(arr).toFixed(2); }),
-        stddevs = _.map(comparatorLos, function(arr) { return ss.standard_deviation(arr).toFixed(2); });
+        medians = _.map(comparatorLos, function(arr) { return (ss.median(arr) || 0).toFixed(2); }),
+        mads = _.map(comparatorLos, function(arr) { return (ss.mad(arr) || 0).toFixed(2); }),
+        means = _.map(comparatorLos, function(arr) { return (ss.mean(arr) || 0).toFixed(2); }),
+        stddevs = _.map(comparatorLos, function(arr) { return (ss.standard_deviation(arr) || 0).toFixed(2); });
 
         // Number of admissions per date range
         numAdmits = _.map(comparatorData, function(d) {
             return _.filter(d, function(row) { return row.type === 'IN'; }).length;
         });
         percentAdmits = _.map(comparatorData, function(d, idx) {
-            return (numAdmits[idx] / d.length).toFixed(2); 
+            return d.length ? (numAdmits[idx] / d.length).toFixed(2) : 0;
         });
 
         // Number of readmissions per date range.
@@ -101,8 +112,8 @@ $(function() {
                 .map(function(t) { return parseFloat(t); })
                 .value(); 
         });
-        nebsMeans = _.map(comparatorNebsTime, function(arr) { return ss.average(arr).toFixed(2); })
-        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return ss.average(arr).toFixed(2); })
+        nebsMeans = _.map(comparatorNebsTime, function(arr) { return (ss.average(arr) || 0).toFixed(2); })
+        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return (ss.average(arr) || 0).toFixed(2); })
     };
 
     render = function() {
@@ -115,7 +126,7 @@ $(function() {
                 autoscale: true,
                 autoscaleMargin: 0.5,
             },
-            trackFormatter: function(e) { return e.y + ' hrs'; }
+            trackFormatter: function(e) { return comparatorRangeText[parseInt(e.x)] + ': ' + e.y + ' hrs'; }
         });
 
         // Admits / readmits graph
