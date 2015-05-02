@@ -41,9 +41,9 @@ $(function() {
         });
 
         // Length of stay for each date range
-        baselineLos = _.pluck(baselineData, 'LOS'),
+        baselineLos = _.pluck(baselineData, 'los'),
         comparatorLos = _.map(comparatorData, function(d) {
-            return _.pluck(d, 'LOS'); 
+            return _.pluck(d, 'los'); 
         });
 
         // LOS stats
@@ -72,14 +72,14 @@ $(function() {
         // Nebs & steroids for each date range
         comparatorNebsTime = _.map(comparatorData, function(d) {
             return _(d)
-                .pluck('Time to nebs')
+                .pluck('nebDelay')
                 .filter(function(t) { return t != null; })
                 .map(function(t) { return parseFloat(t); })
                 .value(); 
         });
         comparatorSteroidsTime = _.map(comparatorData, function(d) {
             return _(d)
-                .pluck('Time to steroids')
+                .pluck('steroidDelay')
                 .filter(function(t) { return t != null; })
                 .map(function(t) { return parseFloat(t); })
                 .value(); 

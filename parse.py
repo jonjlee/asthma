@@ -86,6 +86,7 @@ def main(limit=None):
     ]))
 
     # Calculate other static fields
+    logger.info('Calculating precomputed fields...')
     calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'Nebs', 'Time to nebs')
     calc_time_to_med(data, ['medrol', 'orapred'], 'Steroids', 'Time to steroids')
 
@@ -102,7 +103,7 @@ def main(limit=None):
     # Load
     # ------------------------------------------------------------------------
     logger.info('Writing output...')
-    load.to_js(data, 'data.js', ['Admit', 'pid', 'Visit Type', {'LOS (Hrs)': 'LOS'}, 'Diagnosis', 'Time to nebs', 'Time to steroids'])
+    load.to_js(data, 'data.js', ['Admit', 'pid', {'Visit Type': 'type'}, {'LOS (Hrs)': 'los'}, {'Time to nebs': 'nebDelay'}, {'Time to steroids': 'steroidDelay'}])
     load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
     load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
     load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
