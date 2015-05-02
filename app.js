@@ -44,7 +44,7 @@ $(function() {
         comparatorRangeText = _.map(comparatorRanges, function(r) {
             return monthsText(r).join(' - ');
         });
-        // comparatorRangeText = [dataset1, dataset2, ...]
+        // comparatorData = [dataset1, dataset2, ...]
         comparatorData = _.map(comparatorRanges, function(r) {
             return filterByMonths(filteredByVisitType, r);
         });
@@ -61,6 +61,14 @@ $(function() {
         mads = _.map(comparatorLos, function(arr) { return ss.mad(arr).toFixed(2); }),
         means = _.map(comparatorLos, function(arr) { return ss.mean(arr).toFixed(2); }),
         stddevs = _.map(comparatorLos, function(arr) { return ss.standard_deviation(arr).toFixed(2); });
+
+        // Number of admissions per date range
+        numAdmits = _.map(comparatorData, function(d) {
+            return _.filter(d, function(row) { return row.type === 'IN'; }).length;
+        });
+        percentAdmits = _.map(comparatorData, function(d, idx) {
+            return (numAdmits[idx] / d.length).toFixed(2); 
+        });
 
         // Number of readmissions per date range.
         // readmits = [dataset, ...]
@@ -105,12 +113,23 @@ $(function() {
             yaxis: {
                 title: 'Average LOS<br/>(hours)',
                 autoscale: true,
-                autoscaleMargin: 0.2,
+                autoscaleMargin: 0.5,
             },
             trackFormatter: function(e) { return e.y + ' hrs'; }
         });
 
-        // Readmits graph
+        // Admits / readmits graph
+        drawBarGraph('#admits-graph', {
+            xlabels: comparatorRangeText,
+            y: percentAdmits,
+            yaxis: {
+                title: '% of visits',
+            },
+            trackFormatter: function(e) { 
+                var x = parseInt(e.x);
+                return '[' + comparatorRangeText[x] + ']: ' + numAdmits[x] + '/' + nsamples[x] + ' visits (' + e.y + '%)'; 
+            }
+        });
         drawBarGraph('#readmits-graph', {
             xlabels: comparatorRangeText,
             y: percentVisitsCausingReadmit,
@@ -160,6 +179,8 @@ $(function() {
             ], 1, 1);
         drawTable('#readmit-table', [
             [''].concat(comparatorRangeText),
+            ['# Admissions'].concat(numAdmits),
+            ['% of Visits'].concat(percentAdmits),
             ['# Leading to Readmit'].concat(numVisitsCausingReadmit),
             ['% of Visits'].concat(percentVisitsCausingReadmit),
             ], 1, 1);

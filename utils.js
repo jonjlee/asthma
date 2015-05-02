@@ -10,7 +10,7 @@ $(function() {
     }
 
     // Schedule calc() and render() after 500ms of no activity in sidebar
-    var queueCalc = _.debounce(function() {
+    queueCalc = _.debounce(function() {
         calc();
         render();
     }, 500);
@@ -277,5 +277,6 @@ _init = function() {
         init();
         calc();
         render();
+        $(window).resize(queueCalc);
     });
 }
