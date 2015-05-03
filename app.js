@@ -53,7 +53,7 @@ $(function() {
         // }
         // comparatorRangeText = ['Oct 2007 - Mar 2008', ...]
         comparatorRangeText = _.map(comparatorRanges, function(r) {
-            return monthsText(r).join(' - ');
+            return (r[0] - r[1]) ? monthsText(r).join(' - ') : monthsText(r[0]);
         });
         // comparatorData = [dataset1, dataset2, ...]
         comparatorData = _.map(comparatorRanges, function(r) {
@@ -121,21 +121,15 @@ $(function() {
         drawLineGraph('#graph1', {
             xlabels: comparatorRangeText,
             y: means,
-            yaxis: {
-                title: 'Average LOS<br/>(hours)',
-                autoscale: true,
-                autoscaleMargin: 0.5,
-            },
-            trackFormatter: function(e) { return comparatorRangeText[parseInt(e.x)] + ': ' + e.y + ' hrs'; }
+            ytitle: 'Average LOS<br/>(hours)',
+            yunits: 'hrs',
         });
 
         // Admits / readmits graph
         drawBarGraph('#admits-graph', {
             xlabels: comparatorRangeText,
             y: percentAdmits,
-            yaxis: {
-                title: '% of visits',
-            },
+            ytitle: '% of visits',
             trackFormatter: function(e) { 
                 var x = parseInt(e.x);
                 return '[' + comparatorRangeText[x] + ']: ' + numAdmits[x] + '/' + nsamples[x] + ' visits (' + e.y + '%)'; 
@@ -144,9 +138,7 @@ $(function() {
         drawBarGraph('#readmits-graph', {
             xlabels: comparatorRangeText,
             y: percentVisitsCausingReadmit,
-            yaxis: {
-                title: '% of visits',
-            },
+            ytitle: '% of visits',
             trackFormatter: function(e) { 
                 var x = parseInt(e.x);
                 return '[' + comparatorRangeText[x] + ']: ' + numVisitsCausingReadmit[x] + '/' + nsamples[x] + ' visits (' + e.y + '%)'; 
@@ -157,23 +149,15 @@ $(function() {
         drawLineGraph('#nebs-graph', {
             xlabels: comparatorRangeText,
             y: nebsMeans,
-            yaxis: {
-                title: 'Hours',
-                autoscale: true,
-                autoscaleMargin: 0.5,
-            },
-            trackFormatter: function(e) { return e.y + ' hrs'; }
+            ytitle: 'Hours',
+            yunits: 'hrs',
         });
         // LOS graph
         drawLineGraph('#steroids-graph', {
             xlabels: comparatorRangeText,
             y: steroidsMeans,
-            yaxis: {
-                title: 'Hours',
-                autoscale: true,
-                autoscaleMargin: 0.5,
-            },
-            trackFormatter: function(e) { return e.y + ' hrs'; }
+            ytitle: 'Hours',
+            yunits: 'hrs',
         });
 
         // Statistics

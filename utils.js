@@ -14,6 +14,9 @@ $(function() {
         calc();
         render();
     }, 500);
+    queueRender = _.debounce(function() {
+        render();
+    }, 500);
 
     // Return the months between the start and end dates
     // (e.g. ['1/2001', '12/2002'] -> [new Date('1/1/2001'), new Date('2/1/2001'), ...]
@@ -120,7 +123,7 @@ $(function() {
         // Graph configuration options
         var colors = argDefault(options.colors, ['#00A8F0', '#C0D800', '#9440ED']),
             xaxis = argDefault(options.xaxis, Flotr.defaultOptions.xaxis),
-            yaxis = argDefault(options.yaxis, Flotr.defaultOptions.yaxis),
+            yaxis = argDefault(options.yaxis, { title: options.ytitle, }),
             grid = argDefault(options.grid, { verticalLines: false }),
             trackFormatter = argDefault(options.trackFormatter, Flotr.defaultTrackFormatter),
             mouse = argDefault(options.mouse, {
@@ -176,9 +179,23 @@ $(function() {
 
         // Graph configuration options
         var colors = argDefault(options.colors, ['#00A8F0', '#C0D800', '#9440ED']),
-            xaxis = argDefault(options.xaxis, Flotr.defaultOptions.xaxis),
-            yaxis = argDefault(options.yaxis, Flotr.defaultOptions.yaxis),
-            trackFormatter = argDefault(options.trackFormatter, Flotr.defaultTrackFormatter),
+            xval = _.map(x, function(x) {return parseFloat(x);}),
+            yval = _.map(y, function(y) {return parseFloat(y);}),
+            xmin = _.min(xval), xmax = _.max(xval),
+            ymin = _.min(yval), ymax = _.max(yval),
+            xaxis = argDefault(options.xaxis, {
+                min: xmin * 0.95,
+                max: xmax * 1.05,
+                tickFormatter: function (x) { return options.xlabels[parseInt(x)] || x; }
+            }),
+            yaxis = argDefault(options.yaxis, {
+                    title: options.ytitle,
+                    min: argDefault(options.ymin, ymin * 0.95),
+                    max: argDefault(options.ymax, ymax * 1.05),
+                }),
+            trackFormatter = argDefault(options.trackFormatter, function(e) { 
+                    return (options.xlabels ? options.xlabels[parseInt(e.x)]+': ' : '') + e.y + (options.yunits ? ' '+options.yunits : ''); 
+                }),
             mouse = argDefault(options.mouse, {
                 position: 'ne',
                 track: true,
@@ -201,7 +218,7 @@ $(function() {
                     points: { show: true },
                     lines: { show: true },
                     markers: {
-                        show: true,
+                        show: (x.length < 20),
                         position: 'rt',
                         labelFormatter: function(o) { return o.y; },
                     },
@@ -277,6 +294,6 @@ _init = function() {
         init();
         calc();
         render();
-        $(window).resize(queueCalc);
+        $(window).resize(queueRender);
     });
 }
