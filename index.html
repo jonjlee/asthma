@@ -37,6 +37,14 @@
               </select>
             </li>
             <li class="section">
+              <div>Gender:</div>
+              <select id="gender" class="form-control">
+                <option>All</option>
+                <option>M</option>
+                <option>F</option>
+              </select>
+            </li>
+            <li class="section">
               <div>Months per year to compare:</div>
               <input id="comparator-range" class="slider" type="text"/>
             </li>
@@ -67,7 +75,7 @@
               <div id="admits-graph" class="graph"></div>
             </div>
             <div class="col-md-6">
-              <h4 class="sub-header">Visits leading to readmission</h4>
+              <h4 class="sub-header">Visits leading to revisit</h4>
               <div id="readmits-graph" class="graph"></div>
             </div>
           </div>
@@ -99,6 +107,12 @@
               <div class="col-md-12">
                 <h4>Admission / Readmission</h4>
                 <table id="readmit-table" class="table"></table>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <h4>Medications</h4>
+                <table id="meds-table" class="table"></table>
               </div>
             </div>
           </div>

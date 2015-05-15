@@ -24,8 +24,13 @@ def main(limit=None):
         fieldnames=['Unit#', 'Account#', 'Name', 'Age', 'Sex', 'Wt (kg)', 'Race', 'ADM/SER Date', 'ADM/SER Time', 'Dis Date', 'Dis Time', 'Arrival Date', 'Arrival Time', 'Triage Date', 'Triage Time', 'ER Depart Date', 'ER Depart Time', 'Disch Location', 'LOS (Hrs)', 'Visit Type', 'Dx1', 'Dx2', 'Dx3', 'Dx4', 'Dx5', 'Dx6', 'Dx7', 'Dx8', 'Dx9', 'Dx10', 'Dx11', 'Dx12', 'Dx13', 'Dx14', 'Dx15', 'Dx16', 'Dx17', 'Dx18', 'Dx19', 'Dx20', 'Dx21', 'Dx22', 'Dx23', 'Dx24', 'Dx25', 'Dx26', 'Dx27', 'Dx28', 'Dx29', 'Dx30', 'Dx31', 'Dx32', 'Dx33', 'Dx34', 'Dx35', 'Dx36', 'Dx37', 'Dx38', 'Dx39', 'Dx40', 'Location1', 'Start Date1', 'Start Time1', 'End Date1', 'End Time1', 'Location2', 'Start Date2', 'Start Time2', 'End Date2', 'End Time2', 'Location3', 'Start Date3', 'Start Time3', 'End Date3', 'End Time3', 'Location4', 'Start Date4', 'Start Time4', 'End Date4', 'End Time4', 'Location5', 'Start Date5', 'Start Time5', 'End Date5', 'End Time5', 'Location6', 'Start Date6', 'Start Time6', 'End Date6', 'End Time6', 'Location7', 'Start Date7', 'Start Time7', 'End Date7', 'End Time7', 'Location8', 'Start Date8', 'Start Time8', 'End Date8', 'End Time8', 'Location9', 'Start Date9', 'Start Time9', 'End Date9', 'End Time9', 'Location10', 'Start Date10', 'Start Time10', 'End Date10', 'End Time10', 'Positive Culture: Test', 'Collection Date', 'Coll Time', 'Specimen Type', 'Organism ID', 'Medication', 'Admin Dose & Unit', 'Admin Date', 'Admin Time'],
         startline=2,
         float_fields=['LOS (Hrs)'],
-        datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['Admin Date', 'Admin Time']],
+        datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['Admin Date', 'Admin Time'], ['Start Date1', 'Start Time1'], ['Start Date2', 'Start Time2'], ['Start Date3', 'Start Time3'], ['Start Date4', 'Start Time4'], ['Start Date5', 'Start Time5'], ['Start Date6', 'Start Time6'], ['Start Date7', 'Start Time7'], ['Start Date8', 'Start Time8'], ['Start Date9', 'Start Time9'], ['Start Date10', 'Start Time10']],
         limit=limit)
+    time_roomed = extract.from_csv(
+        filename='2.time-roomed.csv',
+        fieldnames=['Account#', 'Name', 'Triage Level', 'ER Room#', 'ER In Room Date', 'ER In Room Time'],
+        startline=2,
+        datetime_fields=[['ER In Room Date', 'ER In Room Time']])
     icd9 = extract.from_csv(
         filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
@@ -55,8 +60,12 @@ def main(limit=None):
     # Combine cols in a row that represent an array (e.g. {'Dx1': x, 'Dx2': y} -> 'Dx': [x, y])
     transform.cols_to_list(data, target='ICD9 Codes', fields=['Dx1', 'Dx2', 'Dx3', 'Dx4', 'Dx5', 'Dx6', 'Dx7', 'Dx8', 'Dx9', 'Dx10', 'Dx11', 'Dx12', 'Dx13', 'Dx14', 'Dx15', 'Dx16', 'Dx17', 'Dx18', 'Dx19', 'Dx20', 'Dx21', 'Dx22', 'Dx23', 'Dx24', 'Dx25', 'Dx26', 'Dx27', 'Dx28', 'Dx29', 'Dx30', 'Dx31', 'Dx32', 'Dx33', 'Dx34', 'Dx35', 'Dx36', 'Dx37', 'Dx38', 'Dx39', 'Dx40'])
     transform.cols_to_list(data, target='Locs', fields=['Location1', 'Location2', 'Location3', 'Location4', 'Location5', 'Location6', 'Location7', 'Location8', 'Location9', 'Location10'])
-    transform.cols_to_list(data, target='Locs Dates', fields=['Start Date1', 'Start Date2', 'Start Date3', 'Start Date4', 'Start Date5', 'Start Date6', 'Start Date7', 'Start Date8', 'Start Date9', 'Start Date10'])
-    transform.cols_to_list(data, target='Locs Times', fields=['Start Time1', 'Start Time2', 'Start Time3', 'Start Time4', 'Start Time5', 'Start Time6', 'Start Time7', 'Start Time8', 'Start Time9', 'Start Time10'])
+    transform.cols_to_list(data, target='Loc Times', fields=['Start Date1', 'Start Date2', 'Start Date3', 'Start Date4', 'Start Date5', 'Start Date6', 'Start Date7', 'Start Date8', 'Start Date9', 'Start Date10'])
+
+    # Join with time roomed
+    logger.info('Joining with time roomed info...')
+    time_roomed_lookup = transform.to_dict(time_roomed, 'Account#', 'ER In Room Date')
+    transform.calc_field(data, 'Roomed', lambda row: time_roomed_lookup.get(row['Account#']))
 
     # Get list of ICD9 codes represented in data
     logger.info('Building ICD9 lookup...')
@@ -87,7 +96,7 @@ def main(limit=None):
 
     # Calculate other static fields
     logger.info('Calculating precomputed fields...')
-    calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine', 'flovent', 'pulmicort'], 'Nebs', 'Time to nebs')
+    calc_time_to_med(data, ['albuterol', 'ipratropium', 'epinephrine'], 'Nebs', 'Time to nebs')
     calc_time_to_med(data, ['medrol', 'decadron', 'orapred', 'predni'], 'Steroids', 'Time to steroids')
 
     # Make human readable fields
@@ -103,9 +112,9 @@ def main(limit=None):
     # Load
     # ------------------------------------------------------------------------
     logger.info('Writing output...')
-    load.to_js(data, 'data.js', ['Admit', 'pid', {'Visit Type': 'type'}, {'LOS (Hrs)': 'los'}, {'Time to nebs': 'nebDelay'}, {'Time to steroids': 'steroidDelay'}])
-    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
-    load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Admit', 'Discharge', 'LOS (Hrs)', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
+    load.to_js(data, 'data.js', ['Admit', 'pid', 'Sex', {'Visit Type': 'type'}, {'LOS (Hrs)': 'los'}, {'Time to nebs': 'nebDelay'}, {'Time to steroids': 'steroidDelay'}])
+    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
+    load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
     load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
 
     logger.info('Done.')
@@ -119,16 +128,30 @@ def calc_time_to_med(data, meds, med_key, time_key):
         return False
 
     for row in data:
-        t = row['Triage']
+        med, med_time = None, None
+
+        # Get the name, dose, and time of the first administration of any item in 'meds'
         meds_given = zip(row['Meds'], row['Med Doses'], row['Med Times'])
         meds_given = [m for m in meds_given if is_target_med(m[0])]
         meds_given = sorted(meds_given, key=lambda x: x[2])
-        if not t or not meds_given:
-            row[med_key], row[time_key] = None, None
-        else:
-            first_med = meds_given[0]
-            row[med_key] = '%s %s' % (first_med[1], first_med[0])
-            row[time_key] = '{0:.2f}'.format((first_med[2] - t).total_seconds() / 3600)
+        first_med = meds_given and meds_given[0]
+
+        # Calculate time to medication administration from time roomed
+        t = row['Roomed']
+        if t and first_med:
+            delay = (first_med[2] - t).total_seconds() / 60
+
+            # First location that doesn't contain "ER" and the time between the ER and that location
+            er_time_out_idx = next((idx for idx,loc in enumerate(row['Locs']) if 'ER' not in loc), None)
+            er_time_out = er_time_out_idx and row['Loc Times'][er_time_out_idx]
+            er_duration = er_time_out and ((er_time_out - t).total_seconds() / 60)
+
+            # Ignore if med given outside of ER
+            if er_duration is None or delay <= er_duration:
+                med = '%s %s' % (first_med[1], first_med[0])
+                med_time = '{0:.2f}'.format(delay)
+
+        row[med_key], row[time_key] = med, med_time
 
 def calc_time_to_first_neb(data):
     return 

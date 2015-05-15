@@ -6,14 +6,15 @@ $(function() {
         }
 
         bindParam('#visit-type', 'visitType');
+        bindParam('#gender', 'gender');
 
         var allMonths = months(['1/2007', '12/2015']),
             comparatorMonths = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5],
             comparatorMonthsText = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
 
         makeSliderRangeParam('#baseline-range', 'baselineRange', allMonths, { text: monthsText(allMonths), defaultVal: [allMonths[0], allMonths[50]] });
-        makeSliderRangeParam('#comparator-range', 'comparatorMonths', comparatorMonths, { text: comparatorMonthsText, defaultVal: [10, 3] });
-        makeSliderRangeParam('#readmission-days', 'numDaysForReadmission', _.range(0,31), { defaultVal: [0,3] });
+        makeSliderRangeParam('#comparator-range', 'comparatorMonths', comparatorMonths, { text: comparatorMonthsText, defaultVal: [7, 12] });
+        makeSliderRangeParam('#readmission-days', 'numDaysForReadmission', _.range(0,31), { defaultVal: [0,30] });
     };
 
     calc = function() {
@@ -22,22 +23,27 @@ $(function() {
         calcReadmissions(data, settings.numDaysForReadmission);
 
         // Filter by visit type
+        filtered = data
         if (settings.visitType === 'ER only') {
-            filteredByVisitType = _.filter(data, function(row) { return row.type === 'ER'; });
-        } else {
-            filteredByVisitType = data;
+            filtered = _.filter(data, function(row) { return row.type === 'ER'; });
+        }
+
+        // Filter by gender
+        if (settings.gender !== 'All') {
+            filtered = _.filter(data, function(row) { return row.Sex === settings.gender; });
         }
 
         // baselineRange = [Date, Date]
-        baselineData = filterByMonths(filteredByVisitType, settings.baselineRange);
+        baselineData = filterByMonths(filtered, settings.baselineRange);
         baselineRangeText = monthsText(settings.baselineRange);
 
         // comparatorMonths = [int, int]
         // comparatorRanges = [[comparatorMonths[0]/2007, comparatorMonths[1]/2008], ...]
         comparatorRanges = _.map(_.range(2007, 2015), function(year) { 
+            var endYear = (settings.comparatorMonths[1] >= 6) ? year : year+1;
             return [
                 moment(year + '-' + settings.comparatorMonths[0], 'YYYY-MM').toDate(),
-                moment(year+1 + '-' + settings.comparatorMonths[1], 'YYYY-MM').toDate(),
+                moment(endYear + '-' + settings.comparatorMonths[1], 'YYYY-MM').toDate(),
             ];
         });
         // // Generate monthly data
@@ -57,7 +63,7 @@ $(function() {
         });
         // comparatorData = [dataset1, dataset2, ...]
         comparatorData = _.map(comparatorRanges, function(r) {
-            return filterByMonths(filteredByVisitType, r);
+            return filterByMonths(filtered, r);
         });
 
         // Length of stay for each date range
@@ -112,8 +118,10 @@ $(function() {
                 .map(function(t) { return parseFloat(t); })
                 .value(); 
         });
-        nebsMeans = _.map(comparatorNebsTime, function(arr) { return (ss.average(arr) || 0).toFixed(2); })
-        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return (ss.average(arr) || 0).toFixed(2); })
+        nNebs = _.map(comparatorNebsTime, function(arr) { return arr.length; });
+        nSteroids = _.map(comparatorSteroidsTime, function(arr) { return arr.length; });
+        nebsMeans = _.map(comparatorNebsTime, function(arr) { return (ss.average(arr) || 0).toFixed(0); })
+        steroidsMeans = _.map(comparatorSteroidsTime, function(arr) { return (ss.average(arr) || 0).toFixed(0); })
     };
 
     render = function() {
@@ -149,15 +157,15 @@ $(function() {
         drawLineGraph('#nebs-graph', {
             xlabels: comparatorRangeText,
             y: nebsMeans,
-            ytitle: 'Hours',
-            yunits: 'hrs',
+            ytitle: 'Minutes',
+            yunits: 'min',
         });
         // LOS graph
         drawLineGraph('#steroids-graph', {
             xlabels: comparatorRangeText,
             y: steroidsMeans,
-            ytitle: 'Hours',
-            yunits: 'hrs',
+            ytitle: 'Minutes',
+            yunits: 'min',
         });
 
         // Statistics
@@ -176,8 +184,13 @@ $(function() {
             [''].concat(comparatorRangeText),
             ['# Admissions'].concat(numAdmits),
             ['% of Visits'].concat(percentAdmits),
-            ['# Leading to Readmit'].concat(numVisitsCausingReadmit),
+            ['# Leading to Revisit'].concat(numVisitsCausingReadmit),
             ['% of Visits'].concat(percentVisitsCausingReadmit),
+            ], 1, 1);
+        drawTable('#meds-table', [
+            [''].concat(comparatorRangeText),
+            ['# with time to nebs'].concat(nNebs),
+            ['# with time to steroids'].concat(nSteroids),
             ], 1, 1);
     };
 
@@ -206,7 +219,7 @@ $(function() {
             causedReadmitMinDate.setDate(causedReadmitMinDate.getDate() - dayIntervalForReadmit[1]);
             causedReadmitMaxDate.setDate(causedReadmitMaxDate.getDate() - dayIntervalForReadmit[0]);
 
-            if (lastVisitDate && (lastVisitDate >= causedReadmitMinDate && lastVisitDate <= causedReadmitMaxDate)) {
+            if (lastVisitDate && (lastVisit.type == 'ER') && (lastVisitDate >= causedReadmitMinDate && lastVisitDate <= causedReadmitMaxDate)) {
                 lastVisit.causedReadmit = 1;
                 row.readmit = 1;
             }
