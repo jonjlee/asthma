@@ -36,6 +36,8 @@ def main(limit=None):
         encoding='latin-1',
         fieldnames=['code', 'desc'],
         startline=2)
+    # ICD9 codes manually copied from spreadsheet
+    exclude_icd9_codes = set(["155.0", "194.3", "202.80", "204.00", "204.01", "204.02", "277.00", "277.02", "282.41", "282.5", "282.60", "282.61", "282.62", "282.64", "282.69", "461.0", "461.9", "464.10", "466.11", "466.19", "480.0", "480.1", "480.2", "480.8", "480.9", "482.1", "482.42", "482.9", "483.0", "483.8", "485", "486", "487.0", "488.11", "488.81", "494.0", "507.0", "512.82", "512.89", "514", "515", "516.8", "517.3", "518.0", "518.1", "518.52", "519.01", "933.1", "934.9", "935.1", "E911", "E945.7", "V46.11"])
 
     # Transform
     # ------------------------------------------------------------------------
@@ -92,6 +94,7 @@ def main(limit=None):
         '935.0' in row['ICD9 Codes'],       # Foreign body in mouth
         '277.02' in row['ICD9 Codes'],      # CF with pulm
         '277.09' in row['ICD9 Codes'],      # CF other
+        exclude_icd9_codes.intersection(row['ICD9 Codes'])
     ]))
 
     # Calculate other static fields
