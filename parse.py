@@ -39,6 +39,13 @@ def main(limit=None):
         datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['ER In Room Date', 'ER In Room Time'], ['Admin Date', 'Admin Time'], ['Start Date1', 'Start Time1'], ['Start Date2', 'Start Time2'], ['Start Date3', 'Start Time3'], ['Start Date4', 'Start Time4'], ['Start Date5', 'Start Time5'], ['Start Date6', 'Start Time6'], ['Start Date7', 'Start Time7'], ['Start Date8', 'Start Time8'], ['Start Date9', 'Start Time9'], ['Start Date10', 'Start Time10']],
         date_format='%Y-%m-%d',
         limit=max(0, limit-len(data)) if limit is not None else None)
+    cost = extract.from_csv(
+        filename='cost-jun-aug-2011-2015.csv',
+        fieldnames=['Pt LastName', 'Pt FirstName', 'Pt MRN', 'Pt Date of Birth', 'Inv Num', 'Pt Hospital MRN', 'BA Name', 'Loc Name', 'Inv PtAgeAtDos', 'TrnServiceDt', 'TrnServiceDtId Month', 'TrnServiceDtId Year', 'Trn Proc Code', 'Trn Charge Amt', 'Trn CptDesc', 'Inv Diagcd', 'Inv Diag Desc'],
+        startline=2,
+        date_format='%Y-%m-%d',
+        float_fields=['Trn Charge Amt'],
+        datetime_fields=['TrnServiceDt'])
     icd9 = extract.from_csv(
         filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
@@ -60,6 +67,9 @@ def main(limit=None):
         'Arrival Date': 'Arrival',
         'Triage Date': 'Triage',
     })
+    transform.rename(cost, {
+        'TrnServiceDt': 'Admit'
+    })
 
     # Combine rows from the same patient visit that represent an array
     # e.g. [{'ID':1, 'med':x}, {'ID':1, 'med':y}] -> {'ID':1, 'meds':[x,y]}
@@ -74,6 +84,29 @@ def main(limit=None):
     transform.cols_to_list(data, target='ICD9 Codes', fields=['Dx1', 'Dx2', 'Dx3', 'Dx4', 'Dx5', 'Dx6', 'Dx7', 'Dx8', 'Dx9', 'Dx10', 'Dx11', 'Dx12', 'Dx13', 'Dx14', 'Dx15', 'Dx16', 'Dx17', 'Dx18', 'Dx19', 'Dx20', 'Dx21', 'Dx22', 'Dx23', 'Dx24', 'Dx25', 'Dx26', 'Dx27', 'Dx28', 'Dx29', 'Dx30', 'Dx31', 'Dx32', 'Dx33', 'Dx34', 'Dx35', 'Dx36', 'Dx37', 'Dx38', 'Dx39', 'Dx40'])
     transform.cols_to_list(data, target='Locs', fields=['Location1', 'Location2', 'Location3', 'Location4', 'Location5', 'Location6', 'Location7', 'Location8', 'Location9', 'Location10'])
     transform.cols_to_list(data, target='Loc Times', fields=['Start Date1', 'Start Date2', 'Start Date3', 'Start Date4', 'Start Date5', 'Start Date6', 'Start Date7', 'Start Date8', 'Start Date9', 'Start Date10'])
+
+    # Split EMR number list in cost spreadsheet and convert cost to float
+    transform.field_as_set(cost, 'Unit#s', 'Pt Hospital MRN')
+    def cost_to_float(row):
+        # Convert "   $100.00 " to "100.00"
+        cost = row['Trn Charge Amt'].strip('$ ').replace(',', '')
+        if cost.startswith('('):
+            # Convert (100.00) to -100.00
+            cost = '-' + cost.strip('()')
+        try:
+            return float(cost)
+        except ValueError:
+            return None
+    transform.calc_field(cost, 'Cost', cost_to_float)
+
+    # Join with cost
+    logger.info('Joining with cost info...')
+    cost_by_unit_and_admit = {}
+    for row in cost:
+        for unit in row['Unit#s']:
+            costid = '%s;%s' % (unit, row['Admit'].date().isoformat())
+            cost_by_unit_and_admit[costid] = row['Cost']
+    transform.calc_field(data, 'Cost', lambda row: cost_by_unit_and_admit.get('%s;%s' % (row['Unit#'], row['Admit'].date().isoformat())))
 
     # Join with time roomed
     logger.info('Joining with time roomed info...')
@@ -126,9 +159,9 @@ def main(limit=None):
     # Load
     # ------------------------------------------------------------------------
     logger.info('Writing output...')
-    load.to_js(data, 'data.js', ['Admit', 'pid', 'Sex', {'Visit Type': 'type'}, {'LOS (Hrs)': 'los'}, {'Time to nebs': 'nebDelay'}, {'Time to steroids': 'steroidDelay'}])
-    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
-    load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
+    load.to_js(data, 'data.js', ['Admit', 'pid', 'Sex', {'Visit Type': 'type'}, {'LOS (Hrs)': 'los'}, 'Cost', {'Time to nebs': 'nebDelay'}, {'Time to steroids': 'steroidDelay'}])
+    load.to_csv(data, 'data.csv', ['Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'Cost', 'pid', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
+    load.to_xls(data, 'asthma.xls', ['Account#', 'Unit#', 'pid', 'Arrival', 'Triage', 'Roomed', 'Admit', 'Discharge', 'LOS (Hrs)', 'Cost', 'Age', 'Sex', 'Wt (kg)', 'Race', 'Visit Type', 'Nebs', {'Time to nebs': 'Time to nebs (hrs)'}, 'Steroids', {'Time to steroids': 'Time to steroids (hr)'}, 'Med List', 'Micro', 'Diagnosis'])
     load.to_xls(icd9_descs, 'diagnoses.xls', ['Code', 'Description'])
 
     logger.info('Done.')

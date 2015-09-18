@@ -65,17 +65,27 @@ $(function() {
         });
 
         // Length of stay for each date range
-        baselineLos = _.pluck(baselineData, 'los'),
+        baselineLos = _.pluck(baselineData, 'los');
         comparatorLos = _.map(comparatorData, function(d) {
-            return _.pluck(d, 'los');
+            return _.pluck(d, 'los').filter(function(v) { return v !== undefined && v !== null; });
         });
 
         // LOS stats
-        nsamples = _.map(comparatorLos, function(arr) { return arr.length; }),
-        medians = _.map(comparatorLos, function(arr) { return (ss.median(arr) || 0).toFixed(2); }),
-        mads = _.map(comparatorLos, function(arr) { return (ss.mad(arr) || 0).toFixed(2); }),
-        means = _.map(comparatorLos, function(arr) { return (ss.mean(arr) || 0).toFixed(2); }),
+        nsamples = _.map(comparatorLos, function(arr) { return arr.length; });
+        medians = _.map(comparatorLos, function(arr) { return (ss.median(arr) || 0).toFixed(2); });
+        mads = _.map(comparatorLos, function(arr) { return (ss.mad(arr) || 0).toFixed(2); });
+        means = _.map(comparatorLos, function(arr) { return (ss.mean(arr) || 0).toFixed(2); });
         stddevs = _.map(comparatorLos, function(arr) { return (ss.standard_deviation(arr) || 0).toFixed(2); });
+
+        // Cost for each date range
+        cost = _.map(comparatorData, function(d) {
+            return _.pluck(d, 'Cost').filter(function(v) { return v !== undefined && v !== null; });
+        });
+        cost_samples = _.map(cost, function(arr) { return arr.length; });
+        cost_medians = _.map(cost, function(arr) { return (ss.median(arr) || 0).toFixed(2); });
+        cost_mads = _.map(cost, function(arr) { return (ss.mad(arr) || 0).toFixed(2); });
+        cost_means = _.map(cost, function(arr) { return (ss.mean(arr) || 0).toFixed(2); });
+        cost_stddevs = _.map(cost, function(arr) { return (ss.standard_deviation(arr) || 0).toFixed(2); });
 
         // Number of admissions per date range
         numAdmits = _.map(comparatorData, function(d) {
@@ -149,6 +159,13 @@ $(function() {
             yunits: 'hrs',
         });
 
+        // Cost graph
+        drawLineGraph('#cost', {
+            xlabels: comparatorRangeText,
+            y: cost_means,
+            ytitle: 'Average cost ($)',
+        });
+
         // Admits / readmits graph
         drawBarGraph('#admits-graph', {
             xlabels: comparatorRangeText,
@@ -195,6 +212,14 @@ $(function() {
             ['Stddev (hrs)'].concat(stddevs),
             ['Median (hrs)'].concat(medians),
             ['MAD (hrs)'].concat(mads),
+            ], 1, 1);
+        drawTable('#cost-table', [
+            [''].concat(comparatorRangeText),
+            ['# Reported'].concat(cost_samples),
+            ['Average ($)'].concat(cost_means),
+            ['Stddev ($)'].concat(cost_stddevs),
+            ['Median ($)'].concat(cost_medians),
+            ['MAD ($)'].concat(cost_mads),
             ], 1, 1);
         drawTable('#readmit-table', [
             [''].concat(comparatorRangeText),

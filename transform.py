@@ -25,7 +25,7 @@ def sort(data, field, descending=False):
 def filter(data, filter_fn):
     filtered = []
     for row in data:
-        if filter_fn(row): 
+        if filter_fn(row):
             filtered.append(row)
 
     return filtered
@@ -96,8 +96,16 @@ def rows_to_list(data, idkey, target, field, ignore_empty=True):
         v = row.get(field)
         if v or not ignore_empty:
             lst.append(v)
-        
+
         lastid = row[idkey] or lastid
+
+def field_as_set(data, target, field=None, delimiter=',', ignore_empty=True):
+    field = field or target
+    for row in data:
+        vals = row[field].split(delimiter)
+        if ignore_empty:
+            vals = filter(vals, lambda v: v.strip())
+        row[target] = set(vals)
 
 def unique(data, key):
     '''
@@ -110,5 +118,5 @@ def unique(data, key):
         if row[key] and row[key] != lastid:
             filtered.append(row)
         lastid = row[key] or lastid
-    
+
     return filtered
