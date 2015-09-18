@@ -37,7 +37,7 @@ $(function() {
 
         // comparatorMonths = [int, int]
         // comparatorRanges = [[comparatorMonths[0]/2007, comparatorMonths[1]/2008], ...]
-        comparatorRanges = _.map(_.range(2012, 2016), function(year) {
+        comparatorRanges = _.map(_.range(2011, 2016), function(year) {
             var endYear = (settings.comparatorMonths[1] >= 6) ? year : year+1;
             return [
                 moment(year + '-' + settings.comparatorMonths[0], 'YYYY-MM').toDate(),
