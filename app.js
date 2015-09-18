@@ -268,7 +268,7 @@ $(function() {
 
             var visitDate = row['Admit'],
                 lastVisit = lastVisitById[row.pid],
-                lastVisitDate = lastVisit && lastVisit['Admit'] || null;
+                lastVisitDate = lastVisit && lastVisit['Discharge'] || null;
 
             var causedReadmitMinDate = new Date(visitDate),
                 causedReadmitMaxDate = new Date(visitDate);
