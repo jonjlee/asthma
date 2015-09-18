@@ -88,6 +88,8 @@ $(function() {
         cost_mads = _.map(cost, function(arr) { return (ss.mad(arr) || 0).toFixed(2); });
         cost_means = _.map(cost, function(arr) { return (ss.mean(arr) || 0).toFixed(2); });
         cost_stddevs = _.map(cost, function(arr) { return (ss.standard_deviation(arr) || 0).toFixed(2); });
+        cost_stderr = _.map(cost, function(arr) { return (ss.standard_deviation(arr) || 0) / Math.sqrt(arr.length); });
+        cost_cis = _.map(cost, function(arr,idx) { return (ss.mean(arr) - 1.96*cost_stderr[idx]).toFixed(2) + ' to ' + (ss.mean(arr) + 1.96*cost_stderr[idx]).toFixed(2); });
 
         // Number of admissions per date range
         numAdmits = _.map(comparatorData, function(d) {
@@ -220,6 +222,7 @@ $(function() {
             [''].concat(comparatorRangeText),
             ['# Reported'].concat(cost_samples),
             ['Average ($)'].concat(cost_means),
+            ['95% CI ($)'].concat(cost_cis),
             ['Stddev ($)'].concat(cost_stddevs),
             ['Median ($)'].concat(cost_medians),
             ['MAD ($)'].concat(cost_mads),
