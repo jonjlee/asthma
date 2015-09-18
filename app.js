@@ -76,6 +76,8 @@ $(function() {
         mads = _.map(comparatorLos, function(arr) { return (ss.mad(arr) || 0).toFixed(2); });
         means = _.map(comparatorLos, function(arr) { return (ss.mean(arr) || 0).toFixed(2); });
         stddevs = _.map(comparatorLos, function(arr) { return (ss.standard_deviation(arr) || 0).toFixed(2); });
+        stderr = _.map(comparatorLos, function(arr) { return (ss.standard_deviation(arr) || 0) / Math.sqrt(arr.length); });
+        cis = _.map(comparatorLos, function(arr,idx) { return (ss.mean(arr) - 1.96*stderr[idx]).toFixed(2) + ' to ' + (ss.mean(arr) + 1.96*stderr[idx]).toFixed(2); });
 
         // Cost for each date range
         cost = _.map(comparatorData, function(d) {
@@ -209,6 +211,7 @@ $(function() {
         drawTable('#stats-table', [
             [''].concat(comparatorRangeText),
             ['Average (hrs)'].concat(means),
+            ['95% CI (hrs)'].concat(cis),
             ['Stddev (hrs)'].concat(stddevs),
             ['Median (hrs)'].concat(medians),
             ['MAD (hrs)'].concat(mads),
