@@ -3,7 +3,7 @@ $(function() {
     // and used by calc()
     settings = {};
 
-    // Returns defaultVal if arg is undefined - useful for 
+    // Returns defaultVal if arg is undefined - useful for
     // providing default function parameter values
     argDefault = function(arg, defaultVal) {
         return (typeof arg === 'undefined' || arg === null) ? defaultVal : arg;
@@ -51,8 +51,8 @@ $(function() {
         });
     }
 
-    // Create a slider widget to choose a value from a list. 
-    // For example, makeRangeParam('#param1', _.range(1,100)) makes 
+    // Create a slider widget to choose a value from a list.
+    // For example, makeRangeParam('#param1', _.range(1,100)) makes
     // a slider to select a single number between 1 and 100.
     // options = { text: [], defaultVal: v }
     makeSliderParam = function(elId, varName, vals, options) {
@@ -79,8 +79,8 @@ $(function() {
         return $slider;
     }
 
-    // Create a slider widget to set a range from the array vals. 
-    // For example, makeRangeParam('#param1', _.range(1,100)) makes 
+    // Create a slider widget to set a range from the array vals.
+    // For example, makeRangeParam('#param1', _.range(1,100)) makes
     // a slider to select a section between 1 and 100.
     // options = { text: [], defaultVal: [x, y] }
     makeSliderRangeParam = function(elId, varName, vals, options) {
@@ -136,11 +136,12 @@ $(function() {
             xaxis = {
                 min: -0.7,
                 max: _.max(x) + 0.7,
+                noTicks: options.xlabels.length,
                 tickFormatter: function (x) { return options.xlabels[parseInt(x)] || ''; }
             }
         }
         Flotr.draw($(elId)[0], [
-                { 
+                {
                     data: dd,
                     bars: { show: true },
                     points: { show: false },
@@ -161,10 +162,10 @@ $(function() {
     }
 
     // Draw a line graph using the data in options.x and options.y.
-    // Only options.y is required. 
+    // Only options.y is required.
     // options = {
     //      x: [1, 2, ...],                                     // Default is 0 to y.length.
-    //      y: [10, 11, ...],                                   
+    //      y: [10, 11, ...],
     //      xlabels: ['Monday', 'Tuesday', ...],                // Ignored if xaxis is specified.
     //      trackFormatter: { Flotr mouse.trackFormatter() },   // Ignored if mouse is specified.
     //      mouse: { Flotr mouse },
@@ -193,8 +194,8 @@ $(function() {
                     min: argDefault(options.ymin, ymin * 0.95),
                     max: argDefault(options.ymax, ymax * 1.05),
                 }),
-            trackFormatter = argDefault(options.trackFormatter, function(e) { 
-                    return (options.xlabels ? options.xlabels[parseInt(e.x)]+': ' : '') + e.y + (options.yunits ? ' '+options.yunits : ''); 
+            trackFormatter = argDefault(options.trackFormatter, function(e) {
+                    return (options.xlabels ? options.xlabels[parseInt(e.x)]+': ' : '') + e.y + (options.yunits ? ' '+options.yunits : '');
                 }),
             mouse = argDefault(options.mouse, {
                 position: 'ne',
@@ -207,13 +208,14 @@ $(function() {
             xaxis = {
                 min: -0.2,
                 max: _.max(x) + 0.2,
+                noTicks: options.xlabels.length,
                 tickFormatter: function (x) { return options.xlabels[parseInt(x)] || ''; }
             }
         }
 
         var dd = _.map(x, function(xval, idx) { return [xval, y[idx]]; })
         Flotr.draw($(elId)[0], [
-                { 
+                {
                     data: dd,
                     points: { show: true },
                     lines: { show: true },
@@ -265,7 +267,7 @@ $(function() {
 
         // Mouse tracker
         var trackFormatter = function(v) { return '[' + xaxis.tickFormatter(v.x) + ']: ' + parseInt(v.y); }
-        
+
         return drawBarGraph(elId, { x: x, y: y, xaxis: xaxis, trackFormatter: trackFormatter });
     }
 

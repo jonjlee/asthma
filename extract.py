@@ -18,10 +18,10 @@ def from_csv(filename, fieldnames, restkey=None, limit=None, encoding='utf-8', s
     '''
     with open(filename, newline='', encoding=encoding) as f:
         reader = csv.DictReader(f, fieldnames=fieldnames, restkey=restkey)
-        
+
         # Skip startline lines
         for i in range(1, startline): next(reader)
-        
+
         # Read entire file into memory
         if not limit:
             data = [row for row in reader]
@@ -42,11 +42,15 @@ def from_csv(filename, fieldnames, restkey=None, limit=None, encoding='utf-8', s
                 if row[datefield] and row[timefield]:
                     try:
                         row[datefield] = datetime.strptime('%s %s' % (row[datefield], row[timefield]), '%s %s' % (date_format, time_format))
-                    except ValueError: pass
+                    except ValueError:
+                        print('%s\nInvalid datetime: %s %s. Do you need to set date_format param?' % (row, row[datefield], row[timefield]))
+                        exit(1)
             else:
                 # Parse date only
                 try:
                     row[field] = row[field] and datetime.strptime(row[field], date_format)
-                except ValueError: pass
+                except ValueError:
+                    print('%s\nInvalid date: %s %s. Do you need to set date_format param?' % (row, row[datefield]))
+                    exit(1)
 
     return data

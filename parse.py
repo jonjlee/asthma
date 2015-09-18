@@ -15,7 +15,7 @@ def main(limit=None):
     # as a list of dicts where each item represents a row. For example:
     #
     #   data = [
-    #       {'name': 'john doe', 'diagnosis': 'pneumonia'}, 
+    #       {'name': 'john doe', 'diagnosis': 'pneumonia'},
     #       ...
     #   ]
     logger.info('Reading data...')
@@ -31,6 +31,14 @@ def main(limit=None):
         fieldnames=['Account#', 'Name', 'Triage Level', 'ER Room#', 'ER In Room Date', 'ER In Room Time'],
         startline=2,
         datetime_fields=[['ER In Room Date', 'ER In Room Time']])
+    data_mar_to_aug_2015 = extract.from_csv(
+        filename='2-supplemental.csv',
+        fieldnames=['Unit#', 'Account#', 'Name', 'Age', 'Sex', 'Wt (kg)', 'Race', 'ADM/SER Date', 'ADM/SER Time', 'Dis Date', 'Dis Time', 'Arrival Date', 'Arrival Time', 'Triage Date', 'Triage Time', 'ER Depart Date', 'ER Depart Time', 'Triage Level', 'ER Room#', 'ER In Room Date', 'ER In Room Time', 'Disch Location', 'LOS (Hrs)', 'Visit Type', 'Dx1', 'Dx2', 'Dx3', 'Dx4', 'Dx5', 'Dx6', 'Dx7', 'Dx8', 'Dx9', 'Dx10', 'Dx11', 'Dx12', 'Dx13', 'Dx14', 'Dx15', 'Dx16', 'Dx17', 'Dx18', 'Dx19', 'Dx20', 'Dx21', 'Dx22', 'Dx23', 'Dx24', 'Dx25', 'Dx26', 'Dx27', 'Dx28', 'Dx29', 'Dx30', 'Dx31', 'Dx32', 'Dx33', 'Dx34', 'Dx35', 'Dx36', 'Dx37', 'Dx38', 'Dx39', 'Dx40', 'Location1', 'Start Date1', 'Start Time1', 'End Date1', 'End Time1', 'Location2', 'Start Date2', 'Start Time2', 'End Date2', 'End Time2', 'Location3', 'Start Date3', 'Start Time3', 'End Date3', 'End Time3', 'Location4', 'Start Date4', 'Start Time4', 'End Date4', 'End Time4', 'Location5', 'Start Date5', 'Start Time5', 'End Date5', 'End Time5', 'Location6', 'Start Date6', 'Start Time6', 'End Date6', 'End Time6', 'Location7', 'Start Date7', 'Start Time7', 'End Date7', 'End Time7', 'Location8', 'Start Date8', 'Start Time8', 'End Date8', 'End Time8', 'Location9', 'Start Date9', 'Start Time9', 'End Date9', 'End Time9', 'Location10', 'Start Date10', 'Start Time10', 'End Date10', 'End Time10', 'Positive Culture: Test', 'Collection Date', 'Coll Time', 'Specimen Type', 'Organism ID', 'Medication', 'Admin Dose & Unit', 'Admin Date', 'Admin Time'],
+        startline=2,
+        float_fields=['LOS (Hrs)'],
+        datetime_fields=[['ADM/SER Date', 'ADM/SER Time'], ['Dis Date', 'Dis Time'], ['Arrival Date', 'Arrival Time'], ['Triage Date', 'Triage Time'], ['ER In Room Date', 'ER In Room Time'], ['Admin Date', 'Admin Time'], ['Start Date1', 'Start Time1'], ['Start Date2', 'Start Time2'], ['Start Date3', 'Start Time3'], ['Start Date4', 'Start Time4'], ['Start Date5', 'Start Time5'], ['Start Date6', 'Start Time6'], ['Start Date7', 'Start Time7'], ['Start Date8', 'Start Time8'], ['Start Date9', 'Start Time9'], ['Start Date10', 'Start Time10']],
+        date_format='%Y-%m-%d',
+        limit=max(0, limit-len(data)) if limit is not None else None)
     icd9 = extract.from_csv(
         filename='CMS32_DESC_LONG_DX.csv',
         encoding='latin-1',
@@ -41,6 +49,9 @@ def main(limit=None):
 
     # Transform
     # ------------------------------------------------------------------------
+    # Combine supplemental data set (Mar - Aug)
+    data = data + data_mar_to_aug_2015
+
     # Rename fields to be more friendly
     logger.info('Renaming fields...')
     transform.rename(data, {
@@ -67,7 +78,7 @@ def main(limit=None):
     # Join with time roomed
     logger.info('Joining with time roomed info...')
     time_roomed_lookup = transform.to_dict(time_roomed, 'Account#', 'ER In Room Date')
-    transform.calc_field(data, 'Roomed', lambda row: time_roomed_lookup.get(row['Account#']))
+    transform.calc_field(data, 'Roomed', lambda row: row.get('ER In Room Date') or time_roomed_lookup.get(row['Account#']))
 
     # Get list of ICD9 codes represented in data
     logger.info('Building ICD9 lookup...')
@@ -126,7 +137,7 @@ def calc_time_to_med(data, meds, med_key, time_key):
     def is_target_med(med_name):
         med_name = med_name.lower()
         for m in meds:
-            if m in med_name: 
+            if m in med_name:
                 return True
         return False
 
@@ -139,9 +150,12 @@ def calc_time_to_med(data, meds, med_key, time_key):
         meds_given = sorted(meds_given, key=lambda x: x[2])
         first_med = meds_given and meds_given[0]
 
-        # Calculate time to medication administration from time roomed
-        t = row['Roomed']
+        # Calculate time to medication administration from time triaged. Ideally this would actually be time roomed, but there is not enough data available for that field.
+        t = row['Triage']
         if t and first_med:
+            if isinstance(first_med[2], str):
+                print(row)
+                print(first_med)
             delay = (first_med[2] - t).total_seconds() / 60
 
             # First location that doesn't contain "ER" and the time between the ER and that location
@@ -157,7 +171,7 @@ def calc_time_to_med(data, meds, med_key, time_key):
         row[med_key], row[time_key] = med, med_time
 
 def calc_time_to_first_neb(data):
-    return 
+    return
 
 if __name__ == '__main__':
     limit = int(sys.argv[1]) if len(sys.argv) >= 2 else None
