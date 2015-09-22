@@ -137,14 +137,14 @@ $(function() {
         comparatorNebsTime = _.map(comparatorData, function(d) {
             return _(d)
                 .pluck('nebDelay')
-                .filter(function(t) { return t != null; })
+                .filter(function(t) { return t != null && t > 0; })
                 .map(function(t) { return parseFloat(t); })
                 .value();
         });
         comparatorSteroidsTime = _.map(comparatorData, function(d) {
             return _(d)
                 .pluck('steroidDelay')
-                .filter(function(t) { return t != null; })
+                .filter(function(t) { return t != null && t > 0; })
                 .map(function(t) { return parseFloat(t); })
                 .value();
         });
