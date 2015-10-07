@@ -3,6 +3,7 @@ $(function() {
         // Format datetime fields
         for (var i in data) {
             data[i]['Admit'] = new Date(data[i]['Admit']);
+            data[i]['Discharge'] = new Date(data[i]['Discharge']);
         }
 
         bindParam('#visit-type', 'visitType');
